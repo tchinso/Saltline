@@ -1,0 +1,34 @@
+/* game/ui.css — owned by the Game agent. One deliberate dark look (a game viewport): port-authority signage meets a film title card.
+   Sections: tokens · page + boot · HUD · radio · touch controls · menus · panel · motion preferences. */
+:root {
+  color-scheme: dark;
+  --ink: #0b0d0f; --ink-2: #14181b; --bone: #e8e4da; --bone-dim: rgba(232, 228, 218, .64); --bone-faint: rgba(232, 228, 218, .24);
+  --signal: #ffb347; --signal-hot: #ffc977; --rust: #d2622a; --steel: #8d9aa3; --alarm: #ff5a40;
+  --line: rgba(232, 228, 218, .2); --plate: rgba(11, 13, 15, .6); --plate-solid: rgba(11, 13, 15, .9);
+  --f-display: 'Big Shoulders Display', 'Impact', 'Haettenschweiler', 'Arial Narrow', sans-serif;
+  --f-label: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+  --gl: max(16px, env(safe-area-inset-left, 0px)); --gr: max(16px, env(safe-area-inset-right, 0px));
+  --shadow: 0 0 2px rgba(0, 0, 0, .75), 0 1px 5px rgba(0, 0, 0, .55);
+}
+html, body { height: 100%; margin: 0; }
+body { background: var(--ink); color: var(--bone); overflow: hidden; font-family: var(--f-label); -webkit-text-size-adjust: 100%; }
+#app { position: fixed; inset: 0; overflow: hidden; background: var(--ink); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+#app *, #app *::before, #app *::after { box-sizing: border-box; }
+#view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; outline: none; touch-action: none; }
+#ui { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+
+/* ---- boot ---- */
+#boot { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--ink); transition: opacity .6s ease; z-index: 50;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+#boot.done { opacity: 0; pointer-events: none; }
+.boot-mark { font-family: var(--f-display); font-weight: 900; font-size: clamp(40px, 9vw, 96px); letter-spacing: .16em; margin-right: -.16em; color: var(--bone); line-height: 1; }
+.boot-sub { font-family: var(--f-mono); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--steel); text-align: center; }
+.boot-bar { width: min(320px, 70vw); height: 2px; background: #23282c; }
+.boot-bar i { display: block; height: 100%; width: 0%; background: var(--signal); transition: width .25s ease; }
+#fatal { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + var(--sab)) max(16px, env(safe-area-inset-left, 0px)); font: 12px/1.4 var(--f-mono); color: #ffb4a8; background: rgba(40, 8, 4, .85); white-space: pre-wrap; z-index: 99; max-height: 40%; overflow: auto; pointer-events: auto; -webkit-user-select: text; user-select: text; }
+
+
+#boot-fill { width: 4%; }

@@ -1,0 +1,26 @@
+/* =====================================================================  touch controls  */
+.touch { position: absolute; inset: 0; display: none; pointer-events: none; }
+.touch.on { display: block; }
+.t-stick { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; transition: opacity .12s; }
+.t-stick.on { opacity: 1; }
+.t-ring { position: absolute; left: -58px; top: -58px; width: 116px; height: 116px; border-radius: 50%; border: 1.5px solid rgba(232, 228, 218, .5); background: rgba(11, 13, 15, .18); }
+.t-nub { position: absolute; left: -24px; top: -24px; width: 48px; height: 48px; border-radius: 50%; background: rgba(232, 228, 218, .3); border: 1.5px solid rgba(232, 228, 218, .7); }
+.t-btn { position: absolute; pointer-events: auto; touch-action: none; border-radius: 50%; border: 1.5px solid rgba(232, 228, 218, .55); background: rgba(11, 13, 15, .38); color: var(--bone);
+  font: 600 12px/1 var(--f-label); letter-spacing: .14em; padding: 0; margin: 0; -webkit-appearance: none; appearance: none; }
+.t-btn span { pointer-events: none; margin-right: -.14em; }
+.t-btn.active { background: rgba(255, 179, 71, .32); border-color: var(--signal); color: var(--signal); }
+.t-fire { width: 86px; height: 86px; right: calc(20px + var(--sar)); bottom: calc(62px + var(--sab)); font-size: 14px; }
+.t-ads { width: 60px; height: 60px; right: calc(120px + var(--sar)); bottom: calc(34px + var(--sab)); }
+.t-jump { width: 60px; height: 60px; right: calc(20px + var(--sar)); bottom: calc(164px + var(--sab)); }
+.t-reload { width: 54px; height: 54px; right: calc(108px + var(--sar)); bottom: calc(126px + var(--sab)); }
+.t-interact { width: 68px; height: 68px; right: calc(186px + var(--sar)); bottom: calc(96px + var(--sab)); border-color: var(--signal); color: var(--signal); display: none; }
+.t-interact.on { display: block; }
+.t-pause { width: 42px; height: 42px; border-radius: 0; right: calc(12px + var(--sar)); top: calc(12px + var(--sat)); letter-spacing: .2em; }
+/* touch layout: keep the thumbs' corners clear */
+.is-touch .h-ammo { bottom: auto; top: calc(64px + var(--sat)); }
+.is-touch .h-ammo-n { font-size: 44px; } .is-touch .h-pips { margin: 6px 0 5px; } .is-touch .h-pips i { height: 7px; width: 2px; }
+.is-touch .h-health { bottom: auto; top: calc(128px + var(--sat)); }
+.is-touch .h-feed { top: calc(150px + var(--sat)); }
+.is-touch .comms { bottom: auto; top: calc(27% + var(--sat)); }
+.is-touch .h-compass { width: min(300px, calc(100vw - var(--gl) - var(--gr) - 120px)); }
+

@@ -1,0 +1,21 @@
+/* Korean UI: system fonts work without an internet connection. */
+:root {
+  --f-display: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --f-label: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --f-mono: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+}
+.m-word { font-size: clamp(48px, 12vw, 160px) !important; line-height: 1.1 !important; letter-spacing: .03em !important; margin-right: 0 !important; }
+.m-h { line-height: 1.15 !important; letter-spacing: .02em; }
+.boot-mark, .boot-sub, .h-k, .h-obj-t, .h-relays, .h-warn, .h-prompt,
+.h-msg, .h-wname, .comms-who, .comms-t, .t-btn, .m-eyebrow,
+.m-premise, .m-note, .btn, .btn.primary, .m-legend > div, .keys dt,
+.keys dd, .m-k, .m-line, .m-stats dt, .m-rating span, .m-rating b,
+.tab, .panel-b h3, .panel-note, .row label, .seg button, .loc-card b,
+.loc-card span { letter-spacing: .02em; }
+.m-debrief .m-h { white-space: normal; }
+.m-rating b { line-height: 1.15; }
+.t-reload { font-size: 11px; }
+.h-wm b { width: 72px; left: -36px; }
+@media (max-width: 760px) { .m-word { font-size: clamp(42px, 15vw, 110px) !important; } }
+@media (max-height: 520px) { .m-word { font-size: clamp(40px, 15vh, 100px) !important; } }
+

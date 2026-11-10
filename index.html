@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>솔트라인</title>
+    <link rel="stylesheet" href="styles/game.css">
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="view" tabindex="0" data-engine="three.js r180"></canvas>
+      <div id="ui"></div>
+      <div id="boot">
+        <div class="boot-mark">솔트라인</div>
+        <div class="boot-sub" id="boot-msg">렌더러 준비 중</div>
+        <div class="boot-bar"><i id="boot-fill"></i></div>
+      </div>
+    </div>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

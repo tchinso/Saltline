@@ -1,0 +1,32 @@
+/* ---- narrow screens (phones, portrait) ---- */
+@media (max-width: 760px) {
+  .h-obj { top: calc(78px + var(--sat)); max-width: 62vw; } .h-obj-t { font-size: 17px; }
+  .h-heading { display: none; }
+  .h-ammo-n { font-size: 56px; }
+  .is-touch .h-ammo { top: calc(78px + var(--sat)); }
+  .is-touch .h-health { top: calc(150px + var(--sat)); }
+  .m-title { padding-left: var(--gl); padding-right: var(--gr); }
+  .m-word { font-size: clamp(52px, 20vw, 150px) !important; }
+  .m-eyebrow { font-size: 11px; letter-spacing: .2em; }
+  .m-actions .btn.primary { flex: 1 1 100%; }
+  .m-actions:not(.col) .btn:not(.primary) { flex: 1 1 0; padding-left: 8px; padding-right: 8px; }
+  .m-card { padding: 22px 20px 20px; }
+  .comms-t { font-size: 17px; }
+}
+@media (max-height: 520px) {
+  .m-word { font-size: clamp(40px, 20vh, 120px) !important; margin-top: 8px !important; margin-bottom: 10px !important; }
+  .m-premise { padding-top: 10px !important; } .m-actions { margin-top: 12px; } .m-note { margin-top: 10px !important; }
+  .btn.primary { min-height: 44px; } .btn { min-height: 40px; }
+  .m-card { padding: 16px 20px 16px; } .m-h { font-size: clamp(30px, 11vh, 62px) !important; margin: 6px 0 8px !important; }
+  .m-actions.col { margin-top: 12px; gap: 6px; } .m-stats > div { padding: 6px 0 5px; } .m-rating b { font-size: 34px; }
+  .h-prompt { top: 64%; }
+}
+
+/* ---- motion preferences ---- */
+@media (prefers-reduced-motion: reduce) {
+  .menu *, .hud *, .comms, .loc-card, .loc-card *, #boot, .m-bars i { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .h-warn.on { animation: none; opacity: 1; }
+  .h-cue.urgent { animation: none; }
+}
+
+
