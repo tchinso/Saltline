@@ -210,6 +210,7 @@ async function createEnemies(game) {
   }
   const breakers = [createBreaker(game)];
   for (const breaker of breakers) s.add(breaker.rig.group);
+  const colossi = [];
   let g = [];
   for (let T = 0; T < ENEMY_TUNING.maxBolts; T++) g.push({
     on: false,
@@ -328,7 +329,12 @@ async function createEnemies(game) {
     list: t,
     TUNE: ENEMY_TUNING,
     spawn(T, D, C = {}) {
-      let G = T === "gull" ? d : T === "hound" ? v : T === "breaker" ? breakers : null;
+      if (T === 'colossus' && !colossi.length) {
+        const boss = createBreaker(game, 'colossus');
+        colossi.push(boss);
+        s.add(boss.rig.group);
+      }
+      let G = T === "gull" ? d : T === "hound" ? v : T === "breaker" ? breakers : T === 'colossus' ? colossi : null;
       if (!G) return null;
       let j = null;
       for (let N of G) if (!N.active) {
@@ -350,10 +356,10 @@ async function createEnemies(game) {
         let N = t[j];
         if (!N.alive) continue;
         let Q = N.pos.x - T.x;
-        let K = N.pos.y + (N.type === "breaker" ? 1.3 : N.type === "hound" ? .6 : 0) - T.y;
+        let K = N.pos.y + (N.type === "colossus" ? 1.95 : N.type === "breaker" ? 1.3 : N.type === "hound" ? .6 : 0) - T.y;
         let ie = N.pos.z - T.z;
         let F = Q * D.x + K * D.y + ie * D.z;
-        let radiusSq = N.type === "breaker" ? 6 : 1.7;
+        let radiusSq = N.type === "colossus" ? 13.5 : N.type === "breaker" ? 6 : 1.7;
         F < -1.5 || F > C + 1.5 || Q * Q + K * K + ie * ie - F * F > radiusSq || (G || (G = {
           dist: 1 / 0,
           point: new Vector3(),
@@ -373,6 +379,7 @@ async function createEnemies(game) {
       for (let T of d) T.active && T._deactivate();
       for (let T of v) T.active && T._deactivate();
       for (let T of breakers) T.active && T._deactivate();
+      for (let T of colossi) T.active && T._deactivate();
       t.length = 0;
       n.length = 0;
       h.tokens = 0;

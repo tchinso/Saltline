@@ -1,7 +1,7 @@
 import { createCinematic } from './cinematic.js';
 import { createEncounters } from './encounters.js';
 import { createMenus } from '../ui/menus.js';
-import { recordMissionComplete } from './campaign-progress.js';
+import { recordMissionComplete, loadCampaignProgress } from './campaign-progress.js';
 import { createEscort } from './escort.js';
 import { captureAct1Checkpoint, restoreAct1Checkpoint } from './act1-checkpoint.js';
 import { Vector3 } from '../../vendor/three.js';
@@ -79,9 +79,11 @@ function createAct1Mission(game) {
   }
   const mainDefinitions = definitions.filter(o => !o.optional);
   const escortLabels = { m02: '대피 차량', m03: '피난민 차량', m05: '환자 수송차', m06: '대피 수송대' };
-  const escort = escortLabels[game.story.id] ? createEscort(game,
-    level.objectives.find(o => o.id === 'stage_3').pos,
-    level.objectives.find(o => o.id === 'stage_4').pos, escortLabels[game.story.id]) : null;
+  const escortSpec = game.story.escort || (escortLabels[game.story.id] ? { label: escortLabels[game.story.id], objectiveId: 'stage_3' } : null);
+  const escort = escortSpec ? createEscort(game,
+    level.objectives.find(o => o.id === escortSpec.objectiveId).pos,
+    level.objectives.find(o => o.id === (escortSpec.destinationId || 'stage_4')).pos, escortSpec.label, escortSpec) : null;
+  const reconIntel = game.story.reconIntel && loadCampaignProgress().flags.includes('flag_recon_intel');
   let run = {
     time: 0,
     retries: 0,
@@ -201,7 +203,10 @@ function createAct1Mission(game) {
       pos: item.o.pos, kind: "relay"
     }));
     if (escort?.active) markers.push({
-      id: 'escort', short: '호위', label: escortLabels[game.story.id], pos: escort.root.position, kind: 'extract'
+      id: 'escort', short: '호위', label: escortSpec.label, pos: escort.root.position, kind: 'extract'
+    });
+    if (reconIntel && !run.allCut) for (const [i, spawn] of level.enemySpawns.filter(s => s.type === 'ground').slice(0, 3).entries()) markers.push({
+      id: `recon_${i}`, short: '경계', label: '정찰팀이 확인한 경계 위치', pos: spawn.pos, kind: 'relay'
     });
     if (run.allCut && !run.clearing && level.extraction) markers.push({
       id: "extract", short: "탈출", label: "합류 지점", pos: level.extraction.pos, kind: "extract"
@@ -221,7 +226,7 @@ function createAct1Mission(game) {
     resetRun();
     if (restore && checkpoint) {
       restoreAct1Checkpoint(game, run, checkpoint);
-      if (escort && run.cut >= 3) escort.restoreFinished();
+      if (escort && run.cut >= mainDefinitions.findIndex(item => item.id === escortSpec.objectiveId) + 1) escort.restoreFinished();
       updateMarkers();
       hud.setRelays && hud.setRelays(run.cut, mainDefinitions.length);
     } else {
@@ -250,10 +255,11 @@ function createAct1Mission(game) {
     input.setGameplay && input.setGameplay(true);
     hud.setObjective(objectiveText());
     transitionTo("playing");
+    if (reconIntel) hud.radio && hud.radio('정찰팀의 기록으로 알려진 경계 위치가 표시됩니다.', 4);
     updateInputHint(true);
   }
   function objectiveText() {
-    return run.clearing ? (escort?.active ? "수송대를 호위하고 접근하는 적을 제압하라" : "접근하는 적을 제압하라") : run.allCut ? (game.story.extractionText || "합류 지점으로 이동하라") : mainDefinitions[run.cut].label;
+    return run.clearing ? (escort?.active ? `${escortSpec.label}을(를) 호위하고 접근하는 적을 제압하라` : "접근하는 적을 제압하라") : run.allCut ? (game.story.extractionText || "합류 지점으로 이동하라") : mainDefinitions[run.cut].label;
   }
   function updateInputHint(P) {
     let V = input.describeMode ? input.describeMode() : "";
@@ -324,7 +330,7 @@ function createAct1Mission(game) {
   }
   function completeRelay(item) {
     if (item.cut || !activeObjective(item)) return;
-    if (!item.def.optional) checkpoint = captureAct1Checkpoint(game, run);
+    if (!item.def.optional && !run.clearing && !run.queue.length) checkpoint = captureAct1Checkpoint(game, run);
     item.cut = true;
     item.cutting = false;
     item.t = 1;
@@ -334,22 +340,24 @@ function createAct1Mission(game) {
     hud.setRelays && hud.setRelays(run.cut, mainDefinitions.length);
     hud.setPrompt && hud.setPrompt(null);
     player.addShake(.1);
-    if (game.story.id === 'm06' && item.id === 'stage_2') {
-      game.weapon.addAmmo(60);
-      hud.message('보급 확보 — 예비탄 60발', 5);
+    const supply = game.story.supply || (game.story.id === 'm06' ? { objectiveId: 'stage_2', ammo: 60 } : null);
+    if (supply?.objectiveId === item.id) {
+      game.weapon.addAmmo(supply.ammo);
+      hud.message(`보급 확보 — 예비탄 ${supply.ammo}발`, 5);
     }
     if (Number.isInteger(item.def.wave)) {
       queueWave(item.def.wave);
-      run.clearing = true;
+      run.clearing = !item.def.noClear;
     }
-    if (escort && item.id === 'stage_3') {
+    if (escort && item.id === escortSpec.objectiveId) {
       escort.start();
       run.clearing = true;
-      hud.message('수송대를 호위하라 — 적이 접근하면 피해를 입는다', 5);
+      hud.message(`${escortSpec.label}을(를) 호위하라 — 적이 접근하면 위험하다`, 5);
     }
-    if (game.story.breaker?.objectiveId === item.id) {
-      const boss = game.enemies.spawn('breaker', new Vector3(...game.story.breaker.position), { state: 'alert', target: player.pos });
-      if (!boss) throw new Error('Failed to spawn breaker');
+    const bossSpec = game.story.boss || (game.story.breaker ? { ...game.story.breaker, type: 'breaker' } : null);
+    if (bossSpec?.objectiveId === item.id) {
+      const boss = game.enemies.spawn(bossSpec.type, new Vector3(...bossSpec.position), { state: 'alert', target: player.pos });
+      if (!boss) throw new Error(`Failed to spawn ${bossSpec.type}`);
       run.clearing = true;
     }
     if (!item.def.optional && run.cut >= mainDefinitions.length) {
@@ -437,7 +445,7 @@ function createAct1Mission(game) {
               failMission('수송대가 파괴됐다');
               return true;
             }
-            if (escort.finished) hud.radio && hud.radio('수송대가 지정 지점에 도착했다.', 3);
+            if (escort.finished) hud.radio && hud.radio(`${escortSpec.label}: 지정 지점에 도착했다.`, 3);
           }
           if (run.clearing && !escort?.active && !run.queue.length && aliveCount() === 0) {
             run.clearing = false;

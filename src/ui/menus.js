@@ -8,6 +8,7 @@ function createMenus(game, actions) {
   let n = loadSettings();
   let s = document.createElement("div");
   s.className = "menu";
+  if (/^m\d\d$/.test(game.story.id)) s.classList.add('campaign');
   s.dataset.screen = "none";
   s.innerHTML = menuTemplate;
   s.querySelector('[data-story-title]').textContent = game.story.title;

@@ -4,21 +4,24 @@ import { loadCampaignProgress } from '../story/campaign-progress.js';
 // Fixed supply points make recovery a route choice rather than passive regeneration.
 const DEFAULT_SITES = [
   [-25, 0, 6], [-8, 0, 6], [8, 0, 16],
-  [-8, .03, -20], [6, .03, -20], [24, 0, 7]
+  [-8, .03, -20], [6, .03, -20], [24, 0, 7],
+  [-32, 0, -3], [-20, 0, -10], [-14, 0, 14], [0, 0, -7],
+  [11, 0, 3], [18, 0, -12]
 ];
 const ACT1_SITES = [
-  [-27, 0, 3], [-15, 0, -1], [-2, 0, 2], [11, 0, -2], [23, 0, 3]
+  [-30, 0, 3], [-24, 0, -3], [-17, 0, 2], [-11, 0, -2],
+  [-4, 0, 3], [2, 0, -3], [8, 0, 3], [14, 0, -2],
+  [20, 0, 3], [27, 0, -3]
 ];
 const BRIDGE_BONUS_SITES = [[-20, 0, -3], [16, 0, 3]];
 const RESPAWN_SECONDS = 60;
-const HEAL_AMOUNT = 25;
 const PICKUP_RADIUS = 1.15;
 
 export function createMedkits(game, sites) {
   if (!sites) {
     const mapId = game.map?.id || '';
-    sites = /^m0[1-6]_/.test(mapId) ? [...ACT1_SITES] : DEFAULT_SITES;
-    if (mapId === 'm06_bridge' && loadCampaignProgress().flags.includes('flag_medical_supply')) {
+    sites = game.level?.medkitSites ? [...game.level.medkitSites] : /^m(?:0[1-9]|1[0-3])_/.test(mapId) ? [...ACT1_SITES] : DEFAULT_SITES;
+    if ((mapId === 'm06_bridge' || mapId === 'm07_lab') && loadCampaignProgress().flags.includes('flag_medical_supply')) {
       sites.push(...BRIDGE_BONUS_SITES);
     }
   }
@@ -82,7 +85,7 @@ export function createMedkits(game, sites) {
         if (point.remaining > 0 || player.health >= player.maxHealth ||
             Math.abs(player.pos.y - point.position.y) > 1 ||
             Math.hypot(player.pos.x - point.position.x, player.pos.z - point.position.z) > PICKUP_RADIUS) continue;
-        const healed = Math.min(HEAL_AMOUNT, player.maxHealth - player.health);
+        const healed = player.maxHealth - player.health;
         player.heal(healed);
         point.remaining = RESPAWN_SECONDS;
         point.model.visible = false;

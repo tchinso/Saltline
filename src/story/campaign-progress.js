@@ -1,7 +1,9 @@
 const KEY = 'saltline.campaign.v1';
 export const EPISODES = [
   ['m01', '평범한 하루'], ['m02', '통제 불능'], ['m03', '반란'],
-  ['m04', '무너지는 전선'], ['m05', '안전한 곳은 없다'], ['m06', '탈출']
+  ['m04', '무너지는 전선'], ['m05', '안전한 곳은 없다'], ['m06', '탈출'],
+  ['m07', '괴물의 설계자'], ['m08', '첫 번째 승리'], ['m09', '인간의 방식'],
+  ['m10', '끝없는 군대'], ['m11', '보호구역'], ['m12', '철의 길'], ['m13', '승리의 날']
 ];
 
 export function loadCampaignProgress(storage = globalThis.localStorage) {

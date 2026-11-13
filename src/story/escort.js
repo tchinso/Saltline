@@ -2,7 +2,7 @@ import { BoxGeometry, Group, Mesh, MeshStandardMaterial } from '../../vendor/thr
 
 // The convoy advances only while the player stays nearby and the route is clear.
 // Nearby hostile machines can destroy it, making protection an actual objective.
-export function createEscort(game, from, to, label) {
+export function createEscort(game, from, to, label, options = {}) {
   const root = new Group();
   root.name = 'escort';
   const bodyMaterial = new MeshStandardMaterial({ color: 0x8e9a86, roughness: .8 });
@@ -14,9 +14,25 @@ export function createEscort(game, from, to, label) {
     mesh.castShadow = true;
     root.add(mesh);
   }
-  box([2.8, 1, 1.55], [0, .85, 0], bodyMaterial);
-  box([1, .7, 1.4], [.75, 1.55, 0], lightMaterial);
-  for (const x of [-.9, .9]) for (const z of [-.8, .8]) box([.55, .55, .22], [x, .3, z], darkMaterial);
+  if (options.style === 'person') {
+    box([.55, .8, .32], [0, 1.05, 0], bodyMaterial);
+    box([.32, .32, .32], [0, 1.65, 0], lightMaterial);
+    for (const z of [-.15, .15]) box([.18, .65, .17], [0, .34, z], darkMaterial);
+    for (const z of [-.36, .36]) box([.18, .65, .18], [0, 1.03, z], bodyMaterial);
+  } else if (options.style === 'tank') {
+    box([3.6, 1, 2], [0, .8, 0], bodyMaterial);
+    box([1.8, .6, 1.5], [0, 1.55, 0], darkMaterial);
+    box([2, .22, .22], [1.5, 1.65, 0], darkMaterial);
+    for (const z of [-1, 1]) box([3.5, .55, .4], [0, .3, z], darkMaterial);
+  } else if (options.style === 'train') {
+    box([4.4, 1.5, 1.9], [0, 1.1, 0], bodyMaterial);
+    box([1.3, .65, 1.8], [1.45, 2, 0], lightMaterial);
+    for (const x of [-1.5, 1.5]) for (const z of [-.9, .9]) box([.65, .6, .2], [x, .3, z], darkMaterial);
+  } else {
+    box([2.8, 1, 1.55], [0, .85, 0], bodyMaterial);
+    box([1, .7, 1.4], [.75, 1.55, 0], lightMaterial);
+    for (const x of [-.9, .9]) for (const z of [-.8, .8]) box([.55, .55, .22], [x, .3, z], darkMaterial);
+  }
   root.rotation.y = -Math.atan2(to.z - from.z, to.x - from.x);
   game.scene.add(root);
   const display = document.createElement('div');

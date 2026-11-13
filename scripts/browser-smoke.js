@@ -17,7 +17,7 @@ try {
     // Report application failures, excluding machine-installed browser userscripts.
     if (!error.stack?.includes('.user.js')) failures.push(error.message);
   });
-  await page.goto(`${process.env.GAME_URL || 'http://127.0.0.1:4173/'}?q=test&dt=0.016`);
+  await page.goto(`${process.env.GAME_URL || 'http://127.0.0.1:4173/'}?story=harbormaster&q=test&dt=0.016`);
   await page.waitForFunction(() => window.__ready || window.__fatal, {}, { timeout: 180000 });
   assert.equal(await page.evaluate(() => window.__fatal), null);
   assert.equal(await page.evaluate(() => window.__ready), true);

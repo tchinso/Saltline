@@ -1,4 +1,4 @@
-import { CanvasTexture, Color, DoubleSide, GLSL3, Group, LinearFilter, LinearMipmapLinearFilter, Mesh, MeshBasicMaterial, MeshStandardMaterial, NearestFilter, NoColorSpace, OrthographicCamera, PlaneGeometry, RawShaderMaterial, RepeatWrapping, SRGBColorSpace, Scene, ShaderChunk, SphereGeometry, Vector2, Vector3, Vector4, WebGLRenderTarget } from '../../vendor/three.js';
+import { CanvasTexture, Color, DataTexture, DoubleSide, GLSL3, Group, LinearFilter, LinearMipmapLinearFilter, Mesh, MeshBasicMaterial, MeshStandardMaterial, NearestFilter, NoColorSpace, OrthographicCamera, PlaneGeometry, RawShaderMaterial, RepeatWrapping, RGBAFormat, SRGBColorSpace, Scene, ShaderChunk, SphereGeometry, UnsignedByteType, Vector2, Vector3, Vector4, WebGLRenderTarget } from '../../vendor/three.js';
 var Qy = `
 in vec3 position; out vec2 vUv;
 void main(){ vUv = position.xy * 0.5 + 0.5; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
@@ -2161,24 +2161,31 @@ async function createMaterials(i) {
     e.autoClear = true;
     e.xr.enabled = false;
     e.shadowMap.autoUpdate = false;
-    y(G, j);
-    let ne = b(D, true);
-    let re = b(D, false);
-    let $ = b(D, false);
-    Q.copy.uniforms.tA.value = G.textures[0];
-    Q.copy.uniforms.uSq.value = 1;
-    y(ne, Q.copy);
-    Q.copy.uniforms.tA.value = G.textures[1];
-    Q.copy.uniforms.uSq.value = 0;
-    y(re, Q.copy);
-    Q.normal.uniforms.tH.value = G.textures[2];
-    Q.normal.uniforms.uTexel.value = 1 / D;
-    Q.normal.uniforms.uK.value.set(U.bump * .001 * D / C[0], U.bump * .001 * D / C[1]);
-    y($, Q.normal);
-    e.setRenderTarget(K);
-    e.autoClear = ie;
-    e.xr.enabled = F;
-    e.shadowMap.autoUpdate = X;
+    let ne, re, $;
+    try {
+      y(G, j);
+      ne = b(D, true);
+      re = b(D, false);
+      $ = b(D, false);
+      Q.copy.uniforms.tA.value = G.textures[0];
+      Q.copy.uniforms.uSq.value = 1;
+      y(ne, Q.copy);
+      Q.copy.uniforms.tA.value = G.textures[1];
+      Q.copy.uniforms.uSq.value = 0;
+      y(re, Q.copy);
+      Q.normal.uniforms.tH.value = G.textures[2];
+      Q.normal.uniforms.uTexel.value = 1 / D;
+      Q.normal.uniforms.uK.value.set(U.bump * .001 * D / C[0], U.bump * .001 * D / C[1]);
+      y($, Q.normal);
+    } catch (error) {
+      for (const target of [ne, re, $]) target?.dispose();
+      throw error;
+    } finally {
+      e.setRenderTarget(K);
+      e.autoClear = ie;
+      e.xr.enabled = F;
+      e.shadowMap.autoUpdate = X;
+    }
     for (let ue of [ne, re, $]) {
       ue.texture.repeat.set(1 / C[0], 1 / C[1]);
       ue.texture.name = "sl_" + O;
@@ -2206,6 +2213,56 @@ async function createMaterials(i) {
   }
   let M = new Map();
   let E = new Set();
+  // A material must exist synchronously while the level is constructed, but its
+  // procedural textures do not. Share neutral one-pixel textures until each
+  // set is generated during idle time after the first frame.
+  const streaming = !t.show && !t.shot && !t.bench && !t.instantMaterials;
+  const pending = new Map();
+  let streamingStarted = false;
+  let streamingEnabled = false;
+  function solidTexture(bytes, colorSpace = NoColorSpace) {
+    const texture = new DataTexture(new Uint8Array(bytes), 1, 1, RGBAFormat, UnsignedByteType);
+    texture.colorSpace = colorSpace;
+    texture.needsUpdate = true;
+    return texture;
+  }
+  const neutral = streaming ? {
+    albedo: solidTexture([255, 255, 255, 255], SRGBColorSpace),
+    orm: solidTexture([255, 255, 0, 255]),
+    normal: solidTexture([128, 128, 255, 255])
+  } : null;
+  function placeholder(set) {
+    const def = c3[set];
+    return { ...neutral, key: set, tile: Array.isArray(def.tile) ? def.tile : [def.tile, def.tile], size: m(def) };
+  }
+  function streamNext(deadline) {
+    if (!pending.size) { streamingStarted = false; return; }
+    const [set, materials] = pending.entries().next().value;
+    pending.delete(set);
+    try {
+      const textures = A(set);
+      for (const material of materials) {
+        material.map = textures.albedo;
+        material.normalMap = textures.normal;
+        material.roughnessMap = material.metalnessMap = material.aoMap = textures.orm;
+        material.needsUpdate = true;
+      }
+    } catch (error) {
+      console.error(`[mats] texture set "${set}" failed: ${error && error.message || error}`);
+    }
+    if (pending.size) scheduleStream(); else streamingStarted = false;
+  }
+  function scheduleStream() {
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(streamNext, { timeout: 1000 });
+    else setTimeout(streamNext, 50);
+  }
+  function startStreaming() {
+    streamingEnabled = true;
+    if (streaming && !streamingStarted && pending.size) {
+      streamingStarted = true;
+      scheduleStream();
+    }
+  }
   function w(O, q = {}) {
     let U = O + "|" + (q.vertexColors ? "v" : "") + (q.triplanar ? "t" + (q.scale || 1) : "") + (q.doubleSide ? "d" : "") + (q.interior ? "i" : "") + (q.color !== void 0 ? "c" + q.color : "");
     let T = M.get(U);
@@ -2214,7 +2271,7 @@ async function createMaterials(i) {
     D || (E.has(O) || (E.add(O), console.warn(`[mats] unknown material "${O}" \u2014 using fallback`)), D = fA);
     let C;
     try {
-      C = A(D.set);
+      C = streaming && !p.has(D.set) ? placeholder(D.set) : A(D.set);
     } catch (K) {
       E.has("gen:" + D.set) || (E.add("gen:" + D.set), console.error(`[mats] texture set "${D.set}" failed: ${K && K.message || K}`));
       T = new MeshStandardMaterial({
@@ -2275,6 +2332,11 @@ async function createMaterials(i) {
     let Q = "sl2|" + D.tint + (G ? "t" : "") + (j ? "f" : "") + (D.alphaCut ? "a" : "");
     T.customProgramCacheKey = () => Q;
     M.set(U, T);
+    if (streaming && !p.has(D.set)) {
+      if (!pending.has(D.set)) pending.set(D.set, []);
+      pending.get(D.set).push(T);
+      if (streamingEnabled) startStreaming();
+    }
     return T;
   }
   function S(O = 16777215, q = 4) {
@@ -2299,14 +2361,16 @@ async function createMaterials(i) {
     decalNames: z.names,
     uniforms: r,
     update(O) {
-      h.size && performance.now() - d > 4e3 && _();
+      h.size && !pending.size && performance.now() - d > 4e3 && _();
     },
     prewarm(O) {
       for (let q of O || Object.keys(l1)) w(q);
     },
+    startStreaming,
     stats() {
       return {
         sets: a.sets,
+        pendingSets: pending.size,
         textureMB: +(a.bytes / 1048576).toFixed(1),
         genMs: +a.ms.toFixed(0),
         decalMB: +(z.bytes() / 1048576).toFixed(1)

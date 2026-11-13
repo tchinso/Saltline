@@ -19,11 +19,14 @@ test('campaign progress unlocks episodes and retains independent choices across 
   assert.deepEqual(progress.completed, ['m01']);
   assert.deepEqual(progress.flags, ['flag_m01_technician', 'flag_m01_drone_record']);
   assert.deepEqual(loadCampaignProgress(memoryStorage('{bad json')), { version: 1, completed: [], flags: [] });
+  assert.equal(isEpisodeUnlocked(6, progress), false, 'ACT 2 stays locked until M06');
+  progress = recordMissionComplete('m06', [], storage);
+  assert.equal(isEpisodeUnlocked(6, progress), true, 'M06 unlocks M07');
 });
 
 test('ACT 1 registers six distinct maps and valid main and optional objectives', () => {
   const maps = new Set();
-  for (const [id] of EPISODES) {
+  for (const [id] of EPISODES.slice(0, 6)) {
     const { story, map } = content.resolve({ story: id });
     maps.add(map.id);
     assert.deepEqual(story.objectives.filter(o => !o.optional).map(o => o.id), ['stage_1', 'stage_2', 'stage_3', 'stage_4']);
@@ -32,4 +35,15 @@ test('ACT 1 registers six distinct maps and valid main and optional objectives',
   assert.equal(maps.size, 6);
   assert.equal(content.resolve({ story: 'm01' }).story.objectives.filter(o => o.optional).length, 2);
   assert.equal(content.resolve({ story: 'm05' }).story.objectives.find(o => o.optional).flag, 'flag_medical_supply');
+});
+
+test('ACT 2 episodes are registered with distinct maps and persistent optional choices', () => {
+  const maps = new Set();
+  for (const [id] of EPISODES.slice(6, 13)) {
+    const { story, map } = content.resolve({ story: id });
+    maps.add(map.id);
+    assert.deepEqual(story.objectives.filter(o => !o.optional).map(o => o.id), ['stage_1', 'stage_2', 'stage_3', 'stage_4']);
+    assert.ok(story.objectives.some(o => o.optional && o.flag));
+  }
+  assert.equal(maps.size, 7);
 });

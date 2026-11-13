@@ -50,3 +50,25 @@ test('breaker is registered, telegraphs fire, exposes a weak point, and dies and
   assert.equal(retry.hp, 620);
   assert.equal(retry.phase, 'cooldown');
 });
+
+test('colossus has a distinct larger weak point, telegraph and faster damaged phase', async () => {
+  const { game, warnings, shots, killed } = await makeGame();
+  const boss = game.enemies.spawn('colossus', new Vector3(0, 0, 0));
+  assert.equal(boss.hp, 900);
+  for (let i = 0; i < 51; i++) game.enemies.update(.05);
+  assert.match(warnings[0][0], /콜로서스/);
+  const hit = game.enemies.raycast(new Vector3(0, 3.855, 8), new Vector3(0, 0, -1), 50);
+  assert.equal(hit?.part, 'weak');
+  boss.damage(500, boss.pos, null, 'body');
+  for (let i = 0; i < 33; i++) game.enemies.update(.05);
+  assert.equal(shots.length, 1);
+  assert.match(warnings[1][0], /연속 포격/);
+  for (let i = 0; i < 15; i++) game.enemies.update(.05);
+  assert.equal(shots.length, 2);
+  assert.equal(boss.phase, 'cooldown');
+  assert.ok(boss.timer <= 1.7);
+  boss.damage(1000, boss.pos, null, 'body');
+  assert.equal(killed[0].type, 'colossus');
+  game.enemies.clear();
+  assert.equal(game.enemies.spawn('colossus', new Vector3()).hp, 900);
+});

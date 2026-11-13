@@ -5,6 +5,7 @@ import { act1Maps } from '../src/content/maps/act1/index.js';
 import { createPhysics } from '../src/world/physics.js';
 import { createProps } from '../src/world/props/registry.js';
 import { createRandom } from '../src/core/random.js';
+import { createMedkits } from '../src/player/medkits.js';
 import { fallbacks } from '../src/core/fallbacks.js';
 import '../src/world/props/industrial.js';
 import '../src/world/props/register.js';
@@ -24,6 +25,14 @@ test('ACT 1 objectives, extraction, and ground spawns have connected walkable po
     }
     assert.ok(walkable(level.extraction.pos), `${map.id} extraction`);
     assert.ok(game.physics.nav.findPath(level.playerStart.pos, level.extraction.pos), `${map.id} path to extraction`);
+    game.level = level;
+    game.map = map;
+    const supplies = createMedkits(game);
+    assert.ok(supplies.points.length >= 10, `${map.id} supply count`);
+    for (const { position } of supplies.points) {
+      assert.ok(walkable(position), `${map.id} supply position`);
+      assert.ok(game.physics.nav.findPath(level.playerStart.pos, position), `${map.id} path to supply`);
+    }
     for (const spawn of level.enemySpawns.filter(item => item.type === 'ground')) {
       assert.ok(walkable(spawn.pos), `${map.id} spawn ${spawn.pos.x},${spawn.pos.z}`);
     }

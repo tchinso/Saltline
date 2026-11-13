@@ -233,6 +233,9 @@ async function boot() {
       averageFrameTime = value;
     }
   });
+  // Let the first playable/title frame appear before generating optional
+  // high-detail material textures in small idle-time batches.
+  requestAnimationFrame(() => requestAnimationFrame(() => game.mats.startStreaming?.()));
 }
 export { boot };
 export { showFatalError };

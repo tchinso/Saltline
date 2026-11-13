@@ -6,18 +6,18 @@ import { createHarborLayout } from '../src/content/maps/harbor/layout.js';
 import { createPhysics } from '../src/world/physics.js';
 import { Vector3 } from '../vendor/three.js';
 
-test('existing content remains the default and can be selected explicitly', () => {
+test('episode one is the default and the original harbor remains selectable', () => {
   const selected = content.resolve();
-  assert.equal(selected.story.id, 'harbormaster');
-  assert.equal(selected.map.id, 'harbor');
-  assert.equal(content.resolve({ map: 'harbor' }).story, selected.story);
-  assert.equal(content.resolve({ story: 'harbormaster' }).map, selected.map);
+  assert.equal(selected.story.id, 'm01');
+  assert.equal(selected.map.id, 'm01_base');
+  assert.equal(content.resolve({ map: 'harbor' }).story.id, 'harbormaster');
+  assert.equal(content.resolve({ story: 'harbormaster' }).map.id, 'harbor');
   assert.throws(() => content.resolve({ story: 'missing' }), /Unknown story/);
   assert.throws(() => content.resolve({ map: 'missing' }), /Unknown map/);
 });
 
 test('a second map/story can register without modifying the bootstrap', () => {
-  const { map, story } = content.resolve();
+  const { map, story } = content.resolve({ story: 'harbormaster' });
   const secondMap = { ...map, id: 'second-map' };
   const secondStory = { ...story, id: 'second-story', mapId: secondMap.id };
   const registry = createContentRegistry({ maps: [map, secondMap], stories: [story, secondStory], defaultStoryId: story.id });
@@ -50,7 +50,7 @@ test('physics uses per-map bounds, ground and navigation without leaking collide
     navigation: { minX: 100, maxX: 120, minZ: 100, maxZ: 120, cellSize: 1 }
   };
   const physics = createPhysics({ world });
-  const harborPhysics = createPhysics({ world: content.resolve().map.world });
+  const harborPhysics = createPhysics({ world: content.resolve({ story: 'harbormaster' }).map.world });
   physics.build();
   assert.equal(physics.nav.isWalkable(110, 110), true);
   assert.equal(physics.nav.isWalkable(0, 0), false);
@@ -66,7 +66,7 @@ test('physics uses per-map bounds, ground and navigation without leaking collide
 });
 
 test('relay objectives support counts other than the original three', () => {
-  const { story } = content.resolve();
+  const { story } = content.resolve({ story: 'harbormaster' });
   assert.equal(story.objectiveText(3, 3), '중계기 세 개를 차단하라');
   assert.equal(story.objectiveText(5, 5), '남은 중계기 5개를 차단하라');
   assert.equal(story.objectiveText(1, 5), '마지막 중계기를 차단하라');
