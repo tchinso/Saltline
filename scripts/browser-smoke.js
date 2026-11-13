@@ -21,7 +21,7 @@ try {
   await page.waitForFunction(() => window.__ready || window.__fatal, {}, { timeout: 180000 });
   assert.equal(await page.evaluate(() => window.__fatal), null);
   assert.equal(await page.evaluate(() => window.__ready), true);
-  assert.equal(await page.locator('.m-word').textContent(), '솔트라인');
+  assert.equal(await page.locator('.m-word').textContent(), '렐노르');
   const flow = await page.evaluate(() => {
     const game = window.__G;
     // Stop automatic frames while exercising state transitions deterministically.

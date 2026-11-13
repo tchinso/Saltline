@@ -27,9 +27,11 @@ function createAct1Mission(game) {
   let menus = createMenus(game, {
     deploy() {
       callOptional(game.audio, "resume");
-      input.requestLock();
-      startRun({});
+      beginBriefing();
     },
+    'briefing-back'() { briefingBack(); },
+    'briefing-next'() { briefingNext(); },
+    'briefing-skip'() { finishBriefing(); },
     resume() {
       resume(true);
     },
@@ -54,10 +56,7 @@ function createAct1Mission(game) {
     },
     redeploy() {
       callOptional(game.audio, "resume");
-      input.requestLock();
-      startRun({
-        quick: true
-      });
+      beginBriefing();
     }
   });
   menus.applySettings();
@@ -76,6 +75,62 @@ function createAct1Mission(game) {
   choiceResults.setAttribute('aria-label', '선택 목표 결과');
   const actions = menus.root.querySelector('[data-s="complete"] .m-actions');
   actions?.before(choiceResults);
+  const narrative = game.story.narrative || {};
+  const briefing = Array.isArray(narrative.briefing) ? narrative.briefing.filter(line => typeof line === 'string' && line.trim()) : [];
+  const briefingText = menus.root.querySelector('[data-f="briefing-text"]');
+  const briefingCount = menus.root.querySelector('[data-f="briefing-count"]');
+  const briefingTitle = menus.root.querySelector('[data-f="briefing-title"]');
+  const briefingNextButton = menus.root.querySelector('[data-act="briefing-next"]');
+  const briefingBackButton = menus.root.querySelector('[data-act="briefing-back"]');
+  let briefingIndex = 0;
+  let storyHistory = [];
+  const historySeen = new Set();
+  const log = document.createElement('details');
+  log.className = 'story-log';
+  const logSummary = document.createElement('summary');
+  logSummary.textContent = '지금까지의 이야기';
+  const logBody = document.createElement('div');
+  logBody.className = 'story-log-body';
+  log.append(logSummary, logBody);
+  if (briefing.length) menus.root.querySelector('[data-s="paused"] .m-actions')?.before(log);
+  function clearHistory() { storyHistory = []; historySeen.clear(); logBody.replaceChildren(); log.open = false; }
+  function recordStory(text) {
+    if (typeof text !== 'string' || !text.trim() || historySeen.has(text)) return;
+    historySeen.add(text); storyHistory.push(text);
+    const line = document.createElement('p'); line.textContent = text; logBody.appendChild(line);
+  }
+  function captureCheckpoint() {
+    const saved = captureAct1Checkpoint(game, run);
+    saved.storyHistory = [...storyHistory];
+    return saved;
+  }
+  function restoreHistory(lines) {
+    clearHistory();
+    for (const line of lines || []) recordStory(line);
+  }
+  function renderBriefing() {
+    briefingText.textContent = briefing[briefingIndex];
+    briefingCount.textContent = `${briefingIndex + 1} / ${briefing.length}`;
+    briefingTitle.textContent = game.story.title;
+    briefingNextButton.textContent = briefingIndex === briefing.length - 1 ? '작전 시작' : '다음';
+    briefingBackButton.disabled = briefingIndex === 0;
+    recordStory(briefing[briefingIndex]);
+  }
+  function beginBriefing() {
+    if (!briefing.length) { input.requestLock(); startRun({}); return; }
+    clearHistory(); briefingIndex = 0; renderBriefing();
+    transitionTo('briefing'); menus.show('briefing');
+  }
+  function briefingBack() { if (briefingIndex > 0) { briefingIndex--; renderBriefing(); } }
+  function briefingNext(fromGamepad = false) { if (briefingIndex + 1 < briefing.length) { briefingIndex++; renderBriefing(); } else finishBriefing(fromGamepad); }
+  function finishBriefing(fromGamepad = false) { if (!fromGamepad) input.requestLock(); startRun({ preserveStory: true }); }
+  game.events.on('radio:line', event => {
+    if ((mission.state === 'intro' || mission.state === 'playing') && event?.text) recordStory(event.text);
+  });
+  const recap = document.createElement('section');
+  recap.className = 'story-recap';
+  recap.setAttribute('aria-label', '작전 이야기');
+  if (Array.isArray(narrative.debrief) || narrative.choiceRecaps) actions?.before(recap);
   const deadLabel = menus.root.querySelector('[data-f="dead-relays"]')?.previousElementSibling;
   if (deadLabel) deadLabel.textContent = '완료한 목표';
   const definitions = game.story.objectives;
@@ -231,20 +286,23 @@ function createAct1Mission(game) {
     skipIntro: P = false,
     quick: V = false,
     keepRetries: Y = false,
-    restoreCheckpoint: restore = false
+    restoreCheckpoint: restore = false,
+    preserveStory = false
   } = {}) {
     Y || (run.retries = 0);
+    if (!restore && !preserveStory) clearHistory();
     menus.show("none");
     menus.locationCard(false);
     callOptional(game.audio, "setPaused", false);
     resetRun();
     if (restore && checkpoint) {
       restoreAct1Checkpoint(game, run, checkpoint);
+      restoreHistory(checkpoint.storyHistory);
       if (escort && run.cut >= mainDefinitions.findIndex(item => item.id === escortSpec.objectiveId) + 1) escort.restoreFinished();
       updateMarkers();
       hud.setRelays && hud.setRelays(run.cut, mainDefinitions.length);
     } else {
-      checkpoint = captureAct1Checkpoint(game, run);
+      checkpoint = captureCheckpoint();
     }
     callOptional(game.weapon, "setVisible", true);
     hadPointerLock = false;
@@ -280,7 +338,7 @@ function createAct1Mission(game) {
   function updateInputHint(P) {
     let V = input.describeMode ? input.describeMode() : "";
     menus.setLookMode(V);
-    !(!P && V === lastInputMode) && (lastInputMode = V, mission.state === "playing" && (input.mode === "drag" || input.mode === "lock" && !input.locked && !game.params.shot && !game.params.autostart) ? hud.message(V, input.mode === "drag" ? 7 : 4) : mission.state === "playing" && input.locked && hud.message("", 0));
+    !(!P && V === lastInputMode) && (lastInputMode = V, mission.state === "playing" && !input.gamepad && (input.mode === "drag" || input.mode === "lock" && !input.locked && !game.params.shot && !game.params.autostart) ? hud.message(V, input.mode === "drag" ? 7 : 4) : mission.state === "playing" && (input.locked || input.gamepad) && hud.message("", 0));
   }
   input.onModeChange && input.onModeChange(() => updateInputHint(false));
   game.events.on("input:lock", P => {
@@ -296,7 +354,7 @@ function createAct1Mission(game) {
     document.hidden && mission.state === "playing" && pause();
   });
   addEventListener("keydown", P => {
-    mission.state !== "title" || menus.panelOpen || P.code !== "Enter" && P.code !== "NumpadEnter" || P.target && P.target.tagName === "BUTTON" || (callOptional(game.audio, "resume"), input.requestLock(), startRun({}));
+    mission.state !== "title" || menus.panelOpen || P.code !== "Enter" && P.code !== "NumpadEnter" || P.target && P.target.tagName === "BUTTON" || (callOptional(game.audio, "resume"), beginBriefing());
   });
   function pause() {
     mission.state === "playing" && (input.setGameplay && input.setGameplay(false), input.exitLock(), callOptional(game.audio, "setPaused", true), menus.setLookMode(input.mode === "drag" ? input.describeMode() : input.touch ? "" : "계속하기를 누르면 마우스를 다시 캡처함."), hud.show(false), menus.show("paused"), pauseCooldown = .35, transitionTo("paused"));
@@ -346,7 +404,7 @@ function createAct1Mission(game) {
   }
   function completeRelay(item) {
     if (item.cut || !activeObjective(item)) return;
-    if (!item.def.optional && !run.clearing && !run.queue.length) checkpoint = captureAct1Checkpoint(game, run);
+    if (!item.def.optional && !run.clearing && !run.queue.length) checkpoint = captureCheckpoint();
     item.cut = true;
     item.cutting = false;
     item.t = 1;
@@ -397,7 +455,10 @@ function createAct1Mission(game) {
       run.pursuitT = 12;
       game.events.emit("objective:all", {});
     }
-    if (item.def.dialogue && hud.radio) hud.radio(item.def.dialogue, 4);
+    const storyLines = narrative.stageCues?.[item.id];
+    if (Array.isArray(storyLines) && storyLines.length) {
+      for (const line of storyLines) if (typeof line === 'string' && line.trim()) hud.radio?.(line, Math.max(3.5, Math.min(7, line.length / 12)));
+    } else if (item.def.dialogue && hud.radio) hud.radio(item.def.dialogue, 4);
     hud.setObjective(objectiveText());
     updateMarkers();
   }
@@ -431,6 +492,28 @@ function createAct1Mission(game) {
       row.append(label, result);
       return row;
     }));
+    if (recap.isConnected) {
+      recap.replaceChildren();
+      const heading = document.createElement('h3'); heading.textContent = '작전 이야기'; recap.appendChild(heading);
+      const lines = Array.isArray(narrative.debrief) ? [...narrative.debrief] : [];
+      for (const item of run.relays.filter(item => item.def.optional)) {
+        const choice = narrative.choiceRecaps?.[item.def.flag];
+        const line = item.cut ? choice?.completed : choice?.missed;
+        if (typeof line === 'string') lines.push(line);
+      }
+      for (const text of lines) if (typeof text === 'string' && text.trim()) {
+        const line = document.createElement('p'); line.textContent = text; recap.appendChild(line);
+      }
+      const completedCues = run.relays.filter(item => item.cut && !item.def.optional).flatMap(item => narrative.stageCues?.[item.id] || []);
+      if (completedCues.length) {
+        const details = document.createElement('details'); details.className = 'story-log';
+        const summary = document.createElement('summary'); summary.textContent = '작전 중 대화'; details.appendChild(summary);
+        for (const text of completedCues) if (typeof text === 'string' && text.trim()) {
+          const line = document.createElement('p'); line.textContent = text; details.appendChild(line);
+        }
+        recap.appendChild(details);
+      }
+    }
     hud.clearRadio && hud.clearRadio();
     hud.radio && hud.radio(DIALOGUE.done, 2.2);
     let P = game.combat && game.combat.stats || {
@@ -453,6 +536,11 @@ function createAct1Mission(game) {
   function update(P) {
     switch (stateTime += P, mission.state) {
       case "title":
+        updateTitle(P);
+        return false;
+      case "briefing":
+        if (!menus.panelOpen && input.menuPressed?.('confirm')) briefingNext(true);
+        else if (!menus.panelOpen && input.menuPressed?.('cancel')) briefingBack();
         updateTitle(P);
         return false;
       case "intro":
@@ -498,7 +586,7 @@ function createAct1Mission(game) {
           run.waveHot > 0 && V === 0 && !run.queue.length && run.waveHot < 24 && (run.waveHot = 0);
           let Y = run.allCut || run.queue.length || run.waveHot > 0 && V > 0 ? 1 : run.alertT > 0 || V > 0 && hasNearbyEnemy(26) ? .6 : .15;
           Y !== run.intensity && (run.intensity = Y, callOptional(game.audio, "setIntensity", Y));
-          input.mode === "lock" && !input.locked && !input.touch && !game.params.shot && !game.params.autostart ? (inputHintTimer -= P, inputHintTimer <= 0 && (inputHintTimer = 2, hud.message(input.describeMode(), 2.6))) : inputHintTimer = .8;
+          input.mode === "lock" && !input.locked && !input.touch && !input.gamepad && !game.params.shot && !game.params.autostart ? (inputHintTimer -= P, inputHintTimer <= 0 && (inputHintTimer = 2, hud.message(input.describeMode(), 2.6))) : inputHintTimer = .8;
           !run.lowSaid && player.alive && player.health < 30 && (run.lowSaid = true, hud.radio && hud.radio(DIALOGUE.low, 3));
           return true;
         }

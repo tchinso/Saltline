@@ -21,4 +21,4 @@ http.createServer(async (request, response) => {
   } catch {
     response.writeHead(404).end('Not found');
   }
-}).listen(port, '127.0.0.1', () => console.log(`Saltline: http://127.0.0.1:${port}`));
+}).listen(port, '127.0.0.1', () => console.log(`Relnor: http://127.0.0.1:${port}`));

@@ -40,6 +40,8 @@ function createInput(game) {
   let t = document.getElementById("ui");
   let n = new Set();
   let s = new Set();
+  const menuEdges = new Set();
+  const menuHeld = { confirm: false, cancel: false };
   let o = {
     key: new Set(),
     mouse: new Set(),
@@ -76,6 +78,9 @@ function createInput(game) {
     },
     pressed(P) {
       return s.has(P) && (r || g_[P] === 1);
+    },
+    menuPressed(P) {
+      return !r && menuEdges.has(P);
     },
     update: ee,
     endFrame: B,
@@ -376,10 +381,17 @@ function createInput(game) {
       break;
     }
     if (!Y) {
+      menuHeld.confirm = menuHeld.cancel = false;
       f.gamepad && (f.gamepad = false, o.pad.clear());
       return;
     }
     f.gamepad = true;
+    for (const [action, index] of [['confirm', 0], ['cancel', 1]]) {
+      const button = Y.buttons[index];
+      const held = !!button && (button.pressed || button.value > .4);
+      if (held && !menuHeld[action]) menuEdges.add(action);
+      menuHeld[action] = held;
+    }
     re = ue(Y.axes[0] || 0);
     $ = -ue(Y.axes[1] || 0);
     let L = ue(Y.axes[2] || 0);
@@ -423,6 +435,7 @@ function createInput(game) {
   }
   function B() {
     s.clear();
+    menuEdges.clear();
     f.look.dx = 0;
     f.look.dy = 0;
   }

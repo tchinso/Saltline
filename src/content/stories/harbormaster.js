@@ -33,22 +33,22 @@ var DIALOGUE = {
   cut: ["중계기 하나 차단. 적이 눈치챘다 — 기계들이 접근 중이다.", "둘째 중계기 차단. 남은 병력을 모두 투입하고 있다."],
   all: "중계기 세 개 모두 차단. 보트가 남쪽 부두 사다리에서 대기 중이다. 달려라.",
   low: "부상이 심하다. 주변에 놓인 구급품을 찾아라.",
-  done: "대원 탑승 확인. 솔트라인 무력화 완료. 수고했다."
+  done: "대원 탑승 확인. 터미널 보안망 무력화 완료. 수고했다."
 };
 export const harbormaster = {
   id: 'harbormaster',
   mapId: 'harbor',
-  title: '솔트라인',
+  title: '렐노르',
   createMission: createRelayMission,
   tuning: MISSION_TUNING,
   dialogue: DIALOGUE,
   presentation: {
     tag: 'B4',
     unit: '항만청 돌입 부대',
-    location: '솔트라인 터미널 · 05:42',
+    location: '렐노르 터미널 · 05:42',
     premise: '항만 보안망이 통제 불능 상태다. 중계기 세 개를 차단하고 보트에 도착하라.',
     debrief: '4번 선석 · 작전 결과',
-    locationCard: '솔트라인 터미널 · 4번 선석 · 05:42',
+    locationCard: '렐노르 터미널 · 4번 선석 · 05:42',
     support: '항만청 돌입 부대 — 대원 1명, 지원 없음'
   },
   objectiveText(remaining, total) {

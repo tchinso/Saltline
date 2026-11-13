@@ -41,7 +41,7 @@ function createBenchmark(i) {
         let m = x[x.length >> 1];
         let A = i.render.stats ? i.render.stats() : {};
         let _ = i.renderer.getDrawingBufferSize(new Vector2());
-        e.textContent = `솔트라인 성능 측정  시간=${o.toFixed(0)}s
+        e.textContent = `렐노르 성능 측정  시간=${o.toFixed(0)}s
 GPU: ${t}
 화면 버퍼 ${_.x}x${_.y}  품질 ${{
           low: "낮음",

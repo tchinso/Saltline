@@ -13,6 +13,13 @@ var GC = {
   315: "북서"
 };
 var ix = 2 * Math.PI * 19;
+export function parseRadioLine(text) {
+  const match = /^([^:：\n]{1,20})\s*[:：]\s*(.+)$/s.exec(text);
+  if (!match) return { speaker: '관제소', body: text };
+  // Legacy lines occasionally contain several speakers in one string.
+  // Keep every name visible instead of attributing all remarks to the first.
+  return /[:：]/.test(match[2]) ? { speaker: '무전', body: text } : { speaker: match[1].trim(), body: match[2] };
+}
 function element(i, e, t) {
   let n = document.createElement(i);
   e && (n.className = e);
@@ -84,6 +91,7 @@ function createHud(game) {
   j.setAttribute("role", "status");
   j.setAttribute("aria-live", "polite");
   let N = j.querySelector(".comms-t");
+  let speaker = j.querySelector('.comms-who');
   e.appendChild(j);
   let Q = false;
   let K = 420;
@@ -298,7 +306,10 @@ function createHud(game) {
     update: se
   };
   function se(k) {
-    if (ae(k), !Q) return;
+    const paused = game.game?.state === 'paused';
+    j.classList.toggle('paused', paused);
+    if (!paused) ae(k);
+    if (!Q) return;
     let ce = game.player;
     let ve = game.weapon || {};
     let _e = game.camera;
@@ -411,6 +422,9 @@ function createHud(game) {
     if (!ee) {
       if (!me.length) return;
       ee = me.shift();
+      const parsed = parseRadioLine(ee.text);
+      ee.body = parsed.body;
+      speaker.textContent = parsed.speaker;
       B = 0;
       P = 0;
       V = ee.secs;
@@ -420,7 +434,7 @@ function createHud(game) {
         text: ee.text
       });
     }
-    let ce = ee.text;
+    let ce = ee.body;
     if (B < ce.length) {
       P += k * 58;
       let ve = Math.min(ce.length, Math.floor(P));

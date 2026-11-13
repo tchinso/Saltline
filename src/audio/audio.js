@@ -1,4 +1,5 @@
 import { Go, a_, i_, r_ } from './catalog.js';
+import { createEpisodeScore } from './episode-score.js';
 var pi = (i, e, t) => Math.min(t, Math.max(e, i));
 var Pv = (i, e, t) => {
   let n = pi((t - i) / (e - i), 0, 1);
@@ -64,6 +65,7 @@ async function createAudio(game) {
 }
 function createAudioMixer(i, e, t) {
   let n = i.events;
+  const campaignMusic = !t && i.mood?.music || null;
   let s = Math.random;
   let o = () => t ? true : e.state === "running";
   let r = t ? t.bufs : new Map();
@@ -98,7 +100,7 @@ function createAudioMixer(i, e, t) {
   let v = new Set();
   for (let te of [...nC, ...Object.keys(Go)]) {
     let he = Go[te];
-    if (!(!he || v.has(te))) {
+    if (!(!he || v.has(te) || campaignMusic && he.music)) {
       v.add(te);
       for (let pe = 0; pe < he.n; pe++) r.has(te + "#" + pe) || (he.boot ? p(te, pe) : d.push({
         name: te,
@@ -204,6 +206,7 @@ function createAudioMixer(i, e, t) {
   let O = m(1);
   H.music.connect(O);
   O.connect(A);
+  const episodeScore = campaignMusic ? createEpisodeScore(e, H.music, campaignMusic) : null;
   let q = m(1);
   let U = m(1);
   let T = m(0);
@@ -465,7 +468,7 @@ function createAudioMixer(i, e, t) {
     layers: {}
   };
   function Me() {
-    if (Xe.on || !o()) return;
+    if (episodeScore || Xe.on || !o()) return;
     for (let he of tm) if (!r.has(he + "#0")) return;
     let te = e.currentTime + .08;
     for (let he of tm) {
@@ -1044,6 +1047,7 @@ function createAudioMixer(i, e, t) {
         Ot.g.gain.value = Ot.c;
       }
     }
+    episodeScore?.update({ intensity: L, paused: ue, state: ee });
     for (let De of We) {
       De.vC += (De.vT - De.vC) * ye(4);
       De.gC += (De.gT * De.vC - De.gC) * ye(De.rate);
@@ -1297,7 +1301,8 @@ function createAudioMixer(i, e, t) {
         voices: te,
         loops: We.size,
         tracked: pn.size,
-        music: Xe.on,
+        music: episodeScore ? episodeScore.debug().active : Xe.on,
+        episodeScore: episodeScore?.debug() || null,
         intensity: +L.toFixed(2),
         interior: +P.toFixed(2),
         gameState: ee,

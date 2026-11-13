@@ -2458,7 +2458,7 @@ function wA(i) {
     });
     _ = -x / 2 + .25;
     M = y - .75 - 3 * .78 - .05;
-    w(e.label("SALTLINE TERMINAL  B4-0271", {
+    w(e.label("RELNOR TERMINAL  B4-0271", {
       color: "white"
     }), .3);
     w(e.label("MAX GROSS 30480 KG", {

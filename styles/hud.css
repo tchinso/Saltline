@@ -124,6 +124,7 @@
 /* =====================================================================  radio subtitles  */
 .comms { position: absolute; left: 50%; bottom: calc(15% + var(--sab)); transform: translateX(-50%); width: min(620px, calc(100vw - var(--gl) - var(--gr))); text-align: center; opacity: 0; transition: opacity .3s; text-shadow: var(--shadow); }
 .comms.on { opacity: 1; }
+.comms.paused { visibility: hidden; }
 .comms-who { display: block; font: 600 11px/1 var(--f-label); letter-spacing: .34em; margin-right: -.34em; text-transform: uppercase; color: var(--signal); margin-bottom: 6px; }
 .comms-t { display: inline; font: 500 19px/1.3 var(--f-label); letter-spacing: .02em; color: var(--bone); background: var(--plate); box-decoration-break: clone; -webkit-box-decoration-break: clone; padding: 2px 8px; }
 

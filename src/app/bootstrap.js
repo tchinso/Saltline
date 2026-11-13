@@ -3,6 +3,7 @@ import { createBenchmark } from './benchmark.js';
 import { createShowcaseInput, createShowcasePlayer } from './showcase-stubs.js';
 import { showcases } from './showcases.js';
 import { content } from '../content/index.js';
+import { EPISODE_MOODS } from '../content/episode-moods.js';
 import { browserCampaignStorage, campaignAccess } from '../story/campaign-access.js';
 import { createMaterials } from '../render/materials.js';
 import { createEffects } from '../effects/effects.js';
@@ -38,7 +39,7 @@ function showFatalError(i) {
   console.error("[fatal] " + i);
   let e = document.getElementById("fatal");
   e || (e = document.createElement("div"), e.id = "fatal", document.getElementById("app").appendChild(e));
-  e.textContent = "솔트라인을 시작할 수 없음. 브라우저에서 WebGL과 하드웨어 가속이 켜져 있는지 확인해 줘.";
+  e.textContent = "렐노르를 시작할 수 없음. 브라우저에서 WebGL과 하드웨어 가속이 켜져 있는지 확인해 줘.";
 }
 window.addEventListener("error", i => {
   window.__errors.push(String(i.message));
@@ -87,6 +88,7 @@ async function boot() {
   const selected = content.resolve(params);
   game.map = selected.map;
   game.story = selected.story;
+  game.mood = !params.show && !params.shot && !benchmarkMode ? EPISODE_MOODS[selected.story.id] || null : null;
   game.world = selected.map.world;
   window.__G = game;
   let showcase = params.show && showcases[params.show] ? params.show : null;

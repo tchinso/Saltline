@@ -558,7 +558,7 @@ function YA(i, e) {
         r: [tt, 0, 0]
       }, n.range(.5, .9));
     }
-    t.label(y > 0 ? "NYY-J 4x95 mm2  500 m" : "SALTLINE TERMINAL", {
+    t.label(y > 0 ? "NYY-J 4x95 mm2  500 m" : "RELNOR TERMINAL", {
       color: "white",
       font: "stencil",
       distress: .45

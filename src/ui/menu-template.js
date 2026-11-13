@@ -28,8 +28,9 @@ export const menuTemplate = `
     <div class="m-veil"></div>
     <div class="m-bars"><i></i><i></i></div>
 
-    <section class="m-screen m-title" data-s="title" aria-label="솔트라인">
+    <section class="m-screen m-title" data-s="title" aria-label="렐노르">
       <div class="m-title-main">
+        <div class="m-brand">렐노르</div>
         <div class="m-eyebrow"><span class="m-tag" data-story="tag"></span><span data-story="unit"></span><span class="m-dim" data-story="location"></span></div>
         <h1 class="m-word" data-story-title></h1>
         <p class="m-premise" data-story="premise"></p>
@@ -45,6 +46,14 @@ export const menuTemplate = `
         <div><span><kbd>E</kbd> 상호작용</span><span><kbd>Space</kbd> 점프</span><span><kbd>Shift</kbd> 달리기</span><span><kbd>C</kbd> 앉기</span><span><kbd>Esc</kbd> 일시정지</span></div>
         <div class="lg-touch"><em>터치</em><span>왼쪽 손가락으로 이동</span><span>오른쪽 손가락으로 시점 이동</span><span>화면의 버튼으로 사격 · 조준 · 재장전 · 점프</span></div>
       </aside>
+    </section>
+
+    <section class="m-screen m-card m-briefing" data-s="briefing" aria-label="작전 브리핑">
+      <div class="m-k">작전 브리핑 · <span data-f="briefing-count"></span></div>
+      <h2 class="m-h" data-f="briefing-title"></h2>
+      <p class="m-story-page" data-f="briefing-text" aria-live="polite"></p>
+      <p class="m-line">게임패드: A 다음 · B 이전</p>
+      <div class="m-actions"><button class="btn" data-act="briefing-back">이전</button><button class="btn primary" data-act="briefing-next">다음</button><button class="btn" data-act="briefing-skip">건너뛰기</button></div>
     </section>
 
     <section class="m-screen m-card" data-s="paused" aria-label="일시정지">
@@ -68,7 +77,7 @@ export const menuTemplate = `
 
     <section class="m-screen m-card m-debrief" data-s="complete" aria-label="작전 결과">
       <div class="m-k" data-story="debrief"></div>
-      <h2 class="m-h">솔트라인 무력화</h2>
+      <h2 class="m-h">보안망 무력화</h2>
       <div class="m-rating"><span>평가</span><b data-f="rating">깔끔</b></div>
       <dl class="m-stats">
         <div><dt>소요 시간</dt><dd data-f="time">00:00</dd></div>

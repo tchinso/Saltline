@@ -703,7 +703,7 @@ function z1(i, e, t = {}) {
     post: 1,
     tint: En
   });
-  let me = i.mats.label("SALTLINE 04", {
+  let me = i.mats.label("RELNOR 04", {
     color: "white",
     font: "stencil",
     distress: .35
@@ -1931,7 +1931,7 @@ function Eb(i, {
     boatBase: r,
     extractionPoint: new Vector3(30, 0, 20),
     shipName: "KITTIWAKE",
-    craneId: "SALTLINE 04",
+    craneId: "RELNOR 04",
     stats: {
       tris: Math.round(v),
       drawCalls: g

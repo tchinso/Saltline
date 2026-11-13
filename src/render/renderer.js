@@ -1,6 +1,7 @@
 import { ACESFilmicToneMapping, AlwaysDepth, BackSide, BoxGeometry, BufferAttribute, BufferGeometry, CubeCamera, DataTexture, DataUtils, DepthTexture, DirectionalLight, FloatType, Group, HalfFloatType, LinearFilter, Matrix4, Mesh, MeshStandardMaterial, NearestFilter, NoBlending, NoColorSpace, NoToneMapping, OrthographicCamera, PCFShadowMap, PCFSoftShadowMap, PMREMGenerator, PerspectiveCamera, PointLight, RGBAFormat, RedFormat, RepeatWrapping, SRGBColorSpace, Scene, ShaderChunk, ShaderMaterial, SphereGeometry, UnsignedByteType, UnsignedIntType, Vector2, Vector3, WebGLCubeRenderTarget, WebGLRenderTarget, WebGLRenderer } from '../../vendor/three.js';
 import { VIEWMODEL_LAYER, ENVIRONMENT, PLAYER, QUALITY_PRESETS, SUN, WORLD_LAYER } from '../core/config.js';
 import { beveledBoxGeometry, boxGeometry, createMesh } from '../geometry/primitives.js';
+import { resolveVisualMood } from './visual-mood.js';
 var Ug = `
 uniform sampler2D tNoise;
 float n2(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return texture2D(tNoise, (i + f + 0.5) / 256.0).r; }
@@ -56,7 +57,7 @@ void main(){
   vec3 hc = horizonColor(d);
   vec3 midC = mix(vec3(0.15, 0.24, 0.36), vec3(0.72, 0.50, 0.34), pow(ts, 3.0));   // pale band above the fire
   vec3 clearC = mix(hc, midC, smoothstep(0.0, 0.17, h));
-  clearC = mix(clearC, vec3(0.085, 0.145, 0.24), smoothstep(0.10, 0.5, h));
+  clearC = mix(clearC, vec3(0.085, 0.145, 0.24) + (uZen - vec3(0.055, 0.085, 0.13)), smoothstep(0.10, 0.5, h));
   // aureole (mie glow round the sun)
   clearC += uSunCol * vec3(1.0, 0.86, 0.68) * (pow(s, 8.0) * 0.14 + pow(s, 64.0) * 0.55 + pow(s, 600.0) * 2.2 + pow(s, 6000.0) * 14.0);
 
@@ -797,16 +798,16 @@ ${fe}`,
       value: SUN.dir.clone()
     },
     uZen: {
-      value: ENVIRONMENT.zenith.clone()
+      value: e.visualMood ? ENVIRONMENT.zenith.clone().setRGB(...e.visualMood.zenith) : ENVIRONMENT.zenith.clone()
     },
     uHor: {
-      value: ENVIRONMENT.horizon.clone()
+      value: e.visualMood ? ENVIRONMENT.horizon.clone().setRGB(...e.visualMood.horizon) : ENVIRONMENT.horizon.clone()
     },
     uHorAway: {
-      value: ENVIRONMENT.horizonAway.clone()
+      value: e.visualMood ? ENVIRONMENT.horizonAway.clone().setRGB(...e.visualMood.horizonAway) : ENVIRONMENT.horizonAway.clone()
     },
     uSunCol: {
-      value: SUN.color.clone()
+      value: e.visualMood ? SUN.color.clone().setRGB(...e.visualMood.sunColor) : SUN.color.clone()
     }
   });
   let g = {
@@ -1362,7 +1363,8 @@ ${fe}`,
       let ut = le.intensity * g.volSunScale;
       be.uSunRad.value.set(le.color.r * ut, le.color.g * ut, le.color.b * ut);
       let nn = g.volAmbient * (1 + ce * 1.5);
-      be.uAmb.value.set(ENVIRONMENT.fog.r * nn, ENVIRONMENT.fog.g * nn, ENVIRONMENT.fog.b * nn);
+      const fog = e.visualMood?.fog || [ENVIRONMENT.fog.r, ENVIRONMENT.fog.g, ENVIRONMENT.fog.b];
+      be.uAmb.value.set(fog[0] * nn, fog[1] * nn, fog[2] * nn);
       l(H, y.volA);
       q.uniforms.tSrc.value = y.volA.texture;
       q.uniforms.uDir.value.set(ze, 0);
@@ -1525,6 +1527,8 @@ var Jy = 2;
 var Ky = 1;
 async function createRenderer(i) {
   let e = i.params || {};
+  const mood = resolveVisualMood(i.mood?.visual, { ...e, bench: e.bench || globalThis.location?.hash === '#bench' });
+  i.visualMood = mood;
   let t = document.getElementById("view");
   let n = new WebGLRenderer({
     canvas: t,
@@ -1570,8 +1574,15 @@ async function createRenderer(i) {
   l.layers.set(VIEWMODEL_LAYER);
   let c = Oy();
   let u = Hy(c);
+  if (mood) {
+    u.material.uniforms.uZen.value.setRGB(...mood.zenith);
+    u.material.uniforms.uHor.value.setRGB(...mood.horizon);
+    u.material.uniforms.uHorAway.value.setRGB(...mood.horizonAway);
+    u.material.uniforms.uSunCol.value.setRGB(...mood.sunColor);
+  }
   r.add(u.mesh);
   let h = new DirectionalLight(SUN.color, SUN.intensity);
+  if (mood) { h.color.setRGB(...mood.sunColor); h.intensity = mood.sunIntensity; }
   h.name = "sun";
   h.castShadow = true;
   let f = Gy(h, new Vector3(-41, -.2, -33), new Vector3(37, 32, 31), new Vector3(-41, -3, -64), new Vector3(72, 36, 34));
@@ -1803,12 +1814,12 @@ async function createRenderer(i) {
       ads: 0,
       flash: 0,
       fade: 0,
-      saturation: 1,
+      saturation: mood?.saturation ?? 1,
       focusDist: 0,
       shake: 0,
       wet: 1
     },
-    exposure: 1,
+    exposure: mood?.exposure ?? 1,
     env: y ? y.texture : null,
     interiorEnv: null,
     resolution: new Vector2(4, 4),

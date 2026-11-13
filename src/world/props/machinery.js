@@ -151,7 +151,7 @@ function oR(i, e) {
     t.add(u, Ge(.016, .066, .126, .004), {
       p: [-1.684, 1.1, K * .37]
     }, .4);
-    t.label("SALTLINE", {
+    t.label("RELNOR", {
       color: "black",
       font: "sans",
       distress: .3
