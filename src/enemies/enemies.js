@@ -1,6 +1,7 @@
 import { GULL_TUNING, createGull } from './gull.js';
 import { HOUND_TUNING, createHound } from './hound.js';
 import { createBreaker } from './breaker.js';
+import { createTitan } from './titan.js';
 import { AdditiveBlending, Color, CylinderGeometry, DoubleSide, DynamicDrawUsage, Group, InstancedMesh, Matrix4, MeshBasicMaterial, Quaternion, ShaderMaterial, Vector3 } from '../../vendor/three.js';
 import { createRandom } from '../core/random.js';
 import { mergeGeometries } from '../geometry/merge.js';
@@ -213,6 +214,7 @@ async function createEnemies(game) {
   const colossi = [];
   const hunters = [];
   const adaptives = [];
+  const titans = [];
   let g = [];
   for (let T = 0; T < ENEMY_TUNING.maxBolts; T++) g.push({
     on: false,
@@ -331,6 +333,7 @@ async function createEnemies(game) {
     list: t,
     TUNE: ENEMY_TUNING,
     spawn(T, D, C = {}) {
+      if (T === 'titan' && !titans.length) titans.push(createTitan(game));
       if (T === 'colossus' && !colossi.length) {
         const boss = createBreaker(game, 'colossus');
         colossi.push(boss);
@@ -346,7 +349,7 @@ async function createEnemies(game) {
         adaptives.push(enemy);
         s.add(enemy.rig.group);
       }
-      let G = T === "gull" ? d : T === "hound" ? v : T === "breaker" ? breakers : T === 'colossus' ? colossi : T === 'hunter' ? hunters : T === 'adaptive' ? adaptives : null;
+      let G = T === "gull" ? d : T === "hound" ? v : T === "breaker" ? breakers : T === 'colossus' ? colossi : T === 'hunter' ? hunters : T === 'adaptive' ? adaptives : T === 'titan' ? titans : null;
       if (!G) return null;
       let j = null;
       for (let N of G) if (!N.active) {
@@ -368,10 +371,10 @@ async function createEnemies(game) {
         let N = t[j];
         if (!N.alive) continue;
         let Q = N.pos.x - T.x;
-        let K = N.pos.y + (N.type === "colossus" ? 1.95 : ["breaker", "hunter", "adaptive"].includes(N.type) ? 1.3 : N.type === "hound" ? .6 : 0) - T.y;
+        let K = N.pos.y + (N.type === 'titan' ? 3 : N.type === "colossus" ? 1.95 : ["breaker", "hunter", "adaptive"].includes(N.type) ? 1.3 : N.type === "hound" ? .6 : 0) - T.y;
         let ie = N.pos.z - T.z;
         let F = Q * D.x + K * D.y + ie * D.z;
-        let radiusSq = N.type === "colossus" ? 13.5 : ["breaker", "hunter", "adaptive"].includes(N.type) ? 6 : 1.7;
+        let radiusSq = N.type === 'titan' ? 18 : N.type === "colossus" ? 13.5 : ["breaker", "hunter", "adaptive"].includes(N.type) ? 6 : 1.7;
         F < -1.5 || F > C + 1.5 || Q * Q + K * K + ie * ie - F * F > radiusSq || (G || (G = {
           dist: 1 / 0,
           point: new Vector3(),
@@ -394,6 +397,7 @@ async function createEnemies(game) {
       for (let T of colossi) T.active && T._deactivate();
       for (let T of hunters) T.active && T._deactivate();
       for (let T of adaptives) T.active && T._deactivate();
+      for (let T of titans) T.active && T._deactivate();
       t.length = 0;
       n.length = 0;
       h.tokens = 0;

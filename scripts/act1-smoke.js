@@ -12,6 +12,7 @@ const browser = await chromium.launch({
 
 try {
   const page = await browser.newPage({ viewport: { width: 960, height: 640 } });
+  await page.addInitScript(() => localStorage.setItem('saltline.developer-mode.v1', 'enabled'));
   const failures = [];
   page.on('pageerror', error => {
     if (!error.stack?.includes('.user.js')) failures.push(error.message);

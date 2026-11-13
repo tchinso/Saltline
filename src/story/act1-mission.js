@@ -64,7 +64,13 @@ function createAct1Mission(game) {
   const progressLabel = hud.root?.querySelector('.h-relays span');
   if (progressLabel) progressLabel.textContent = '목표';
   const debriefHeading = menus.root.querySelector('[data-s="complete"] .m-h');
-  if (debriefHeading) debriefHeading.textContent = '작전 완료';
+  if (debriefHeading) debriefHeading.textContent = game.story.completionTitle || '작전 완료';
+  if (game.story.endingText && debriefHeading) {
+    const ending = document.createElement('p');
+    ending.className = 'm-line campaign-ending';
+    ending.textContent = game.story.endingText;
+    debriefHeading.after(ending);
+  }
   const choiceResults = document.createElement('dl');
   choiceResults.className = 'm-stats';
   choiceResults.setAttribute('aria-label', '선택 목표 결과');
@@ -80,6 +86,7 @@ function createAct1Mission(game) {
   const mainDefinitions = definitions.filter(o => !o.optional);
   const escortLabels = { m02: '대피 차량', m03: '피난민 차량', m05: '환자 수송차', m06: '대피 수송대' };
   const escortSpec = game.story.escort || (escortLabels[game.story.id] ? { label: escortLabels[game.story.id], objectiveId: 'stage_3' } : null);
+  const escortDuration = escortSpec?.duration;
   const escort = escortSpec ? createEscort(game,
     level.objectives.find(o => o.id === escortSpec.objectiveId).pos,
     level.objectives.find(o => o.id === (escortSpec.destinationId || 'stage_4')).pos, escortSpec.label, escortSpec) : null;
@@ -211,6 +218,10 @@ function createAct1Mission(game) {
     if (reconIntel && !run.allCut) for (const [i, spawn] of level.enemySpawns.filter(s => s.type === 'ground').slice(0, 3).entries()) markers.push({
       id: `recon_${i}`, short: '경계', label: '정찰팀이 확인한 경계 위치', pos: spawn.pos, kind: 'relay'
     });
+    if (run.allCut && game.story.epilogueScene) {
+      const scene = level.root?.getObjectByName('reconstruction-scene');
+      if (scene) markers.push({ id:'rebuild', short:'재건', label:'사람이 승인한 재건 작업', pos:scene.position, kind:'relay' });
+    }
     if (run.allCut && !run.clearing && level.extraction) markers.push({
       id: "extract", short: "탈출", label: "합류 지점", pos: level.extraction.pos, kind: "extract"
     });
@@ -354,12 +365,18 @@ function createAct1Mission(game) {
     if (bonus?.objectiveId === item.id && loadCampaignProgress().flags.includes(bonus.flag)) {
       game.weapon.addAmmo(bonus.ammo);
       hud.message(`${bonus.label} — 예비탄 ${bonus.ammo}발`, 5);
+      if (bonus.dialogue) hud.radio?.(bonus.dialogue, 4);
     }
     if (Number.isInteger(item.def.wave)) {
       queueWave(item.def.wave);
       run.clearing = !item.def.noClear;
     }
     if (escort && item.id === escortSpec.objectiveId) {
+      if (escortSpec.supportFlag) {
+        const supported = run.relays.some(objective => objective.cut && objective.def.flag === escortSpec.supportFlag);
+        escortSpec.duration = supported ? escortSpec.supportDuration : escortDuration;
+        if (supported) hud.radio?.('기술병: 송신 준비를 도와 연결 시간을 줄이겠습니다.', 4);
+      }
       escort.start();
       run.clearing = true;
       hud.message(`${escortSpec.label}을(를) 호위하라 — 적이 접근하면 위험하다`, 5);

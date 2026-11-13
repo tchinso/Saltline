@@ -15,7 +15,7 @@ const PICKUP_RADIUS = 1.15;
 // Ammo bags restore both the magazine and the regular reserve capacity.
 export function createAmmoBags(game, sites) {
   const mapId = game.map?.id || '';
-  sites ||= game.level?.ammoSites || (/^m(?:0[1-9]|1[0-9]|2[0-1])_/.test(mapId) ? CAMPAIGN_SITES : HARBOR_SITES);
+  sites ||= game.level?.ammoSites || (/^m(?:0[1-9]|1[0-9]|2[0-6])_/.test(mapId) ? CAMPAIGN_SITES : HARBOR_SITES);
   const root = new Group();
   root.name = 'ammo-bags';
   game.scene.add(root);

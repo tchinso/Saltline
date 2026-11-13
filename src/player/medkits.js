@@ -20,7 +20,7 @@ const PICKUP_RADIUS = 1.15;
 export function createMedkits(game, sites) {
   if (!sites) {
     const mapId = game.map?.id || '';
-    sites = game.level?.medkitSites ? [...game.level.medkitSites] : /^m(?:0[1-9]|1[0-3])_/.test(mapId) ? [...ACT1_SITES] : DEFAULT_SITES;
+    sites = game.level?.medkitSites ? [...game.level.medkitSites] : /^m(?:0[1-9]|1[0-9]|2[0-6])_/.test(mapId) ? [...ACT1_SITES] : DEFAULT_SITES;
     if ((mapId === 'm06_bridge' || mapId === 'm07_lab') && loadCampaignProgress().flags.includes('flag_medical_supply')) {
       sites.push(...BRIDGE_BONUS_SITES);
     }

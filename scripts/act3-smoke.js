@@ -5,6 +5,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright')
 const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_PATH ? { executablePath: process.env.BROWSER_PATH } : {}), args: ['--enable-unsafe-swiftshader'] });
 try {
   const page = await browser.newPage({ viewport: { width: 960, height: 640 } });
+  await page.addInitScript(() => localStorage.setItem('saltline.developer-mode.v1', 'enabled'));
   const failures = [];
   page.on('pageerror', error => { if (!error.stack?.includes('.user.js')) failures.push(error.message); });
   for (let episode = 14; episode <= 21; episode++) {

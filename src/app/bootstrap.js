@@ -3,6 +3,7 @@ import { createBenchmark } from './benchmark.js';
 import { createShowcaseInput, createShowcasePlayer } from './showcase-stubs.js';
 import { showcases } from './showcases.js';
 import { content } from '../content/index.js';
+import { browserCampaignStorage, campaignAccess } from '../story/campaign-access.js';
 import { createMaterials } from '../render/materials.js';
 import { createEffects } from '../effects/effects.js';
 import { createProps } from '../world/props/registry.js';
@@ -59,6 +60,15 @@ async function setBootProgress(i, e) {
 }
 async function boot() {
   let params = Object.fromEntries(new URLSearchParams(location.search));
+  const access = campaignAccess(params, content.listStories(), browserCampaignStorage());
+  params = access.params;
+  if (access.changed) {
+    // Update the address without a second expensive page load.
+    const url = new URL(location.href);
+    if (params.story) url.searchParams.set('story', params.story);
+    if (!params.map) url.searchParams.delete('map');
+    try { history.replaceState(history.state, '', url); } catch { /* The selected content is still restricted. */ }
+  }
   let benchmarkMode = !!params.bench || location.hash === "#bench";
   benchmarkMode && (params.noaudio = "1", params.autostart = "1");
   let game = {
@@ -197,6 +207,10 @@ async function boot() {
     await loadSystem("enemies", "enemies", () => createEnemies(game));
     await loadSystem("hud", "hud", () => createHud(game));
     game.game = game.story.createMission(game);
+    if (access.redirected) {
+      const note = game.game.menus?.root?.querySelector('.m-note');
+      if (note) note.textContent = '아직 열리지 않은 화입니다. 현재 접근할 수 있는 마지막 화로 이동했습니다.';
+    }
   }
   await setBootProgress("첫 장면 준비 중", .92);
   try {

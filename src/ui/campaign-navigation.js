@@ -1,4 +1,5 @@
 import { EPISODES, isEpisodeUnlocked, loadCampaignProgress } from '../story/campaign-progress.js';
+import { lastAccessibleEpisode } from '../story/campaign-access.js';
 
 const DEVELOPER_KEY = 'saltline.developer-mode.v1';
 
@@ -14,20 +15,21 @@ export function addCampaignNavigation(root, story) {
   picker.appendChild(heading);
   const list = document.createElement('div');
   const episodeButtons = [];
+  const actHeadings = [];
   list.className = 'campaign-episodes';
   list.tabIndex = 0;
   list.setAttribute('aria-label', '화 선택 목록, 스크롤하여 전체 보기');
-  EPISODES.forEach(([id, name], index) => {
-    if (index === 0 || index === 6 || index === 13) {
+  EPISODES.forEach(([id], index) => {
+    if (index === 0 || index === 6 || index === 13 || index === 21) {
       const act = document.createElement('span');
       act.className = 'campaign-act';
-      act.textContent = index === 0 ? 'ACT 1 · 반란의 시작' : index === 6 ? 'ACT 2 · 인류의 반격' : 'ACT 3 · 기계의 역습';
+      const actNumber = actHeadings.length + 1;
+      const subtitle = ['반란의 시작', '인류의 반격', '기계의 역습', '마지막 반격'][actNumber - 1];
+      actHeadings.push({ element: act, start: index, number: actNumber, subtitle });
       list.appendChild(act);
     }
     const button = document.createElement('button');
     button.className = 'btn small';
-    button.textContent = `${String(index + 1).padStart(2, '0')} · ${name}${progress.completed.includes(id) ? ' ✓' : ''}`;
-    button.disabled = !developerMode && !isEpisodeUnlocked(index, progress);
     button.setAttribute('aria-current', String(story.id === id));
     button.addEventListener('click', () => navigate(id));
     list.appendChild(button);
@@ -43,14 +45,31 @@ export function addCampaignNavigation(root, story) {
   disableDeveloper.className = 'btn small developer-disable';
   disableDeveloper.textContent = '개발자 모드 끄기';
   picker.appendChild(disableDeveloper);
+  const developerStatus = document.createElement('p');
+  developerStatus.className = 'developer-status';
+  developerStatus.setAttribute('role', 'status');
+  root.querySelector('[data-act="invert"]').closest('.row').after(developerStatus);
   function updateDeveloperMode() {
-    episodeButtons.forEach((button, index) => { button.disabled = !developerMode && !isEpisodeUnlocked(index, progress); });
+    episodeButtons.forEach((button, index) => {
+      const [id, name] = EPISODES[index];
+      const unlocked = isEpisodeUnlocked(index, progress);
+      button.disabled = !developerMode && !unlocked;
+      button.textContent = `${String(index + 1).padStart(2, '0')} · ${developerMode || unlocked ? name : '잠긴 에피소드'}${progress.completed.includes(id) ? ' ✓' : ''}`;
+    });
+    actHeadings.forEach((act, index) => {
+      const end = actHeadings[index + 1]?.start ?? EPISODES.length;
+      const unlocked = EPISODES.slice(act.start, end).some((_, i) => isEpisodeUnlocked(act.start + i, progress));
+      act.element.textContent = `ACT ${act.number}${developerMode || unlocked ? ` · ${act.subtitle}` : ''}`;
+    });
     disableDeveloper.hidden = !developerMode;
+    developerStatus.textContent = developerMode ? '개발자 모드가 켜져 있습니다.' : '';
   }
   disableDeveloper.addEventListener('click', () => {
     try { localStorage.removeItem(DEVELOPER_KEY); } catch { return; }
     developerMode = false;
     updateDeveloperMode();
+    const current = EPISODES.findIndex(([id]) => id === story.id);
+    if (current >= 0 && !isEpisodeUnlocked(current, progress)) navigate(lastAccessibleEpisode(progress));
   });
   updateDeveloperMode();
   if (story.id !== 'harbormaster') {
@@ -77,7 +96,6 @@ export function addCampaignNavigation(root, story) {
   const error = overlay.querySelector('.developer-error');
   const closeButton = overlay.querySelector('[data-developer-close]');
   let previousFocus = null;
-  let presses = 0;
   function closeDialog() {
     overlay.hidden = true;
     input.value = '';
@@ -98,8 +116,6 @@ export function addCampaignNavigation(root, story) {
     developerMode = true;
     updateDeveloperMode();
     closeDialog();
-    picker.open = true;
-    disableDeveloper.focus();
   });
   overlay.addEventListener('keydown', event => {
     // Mission title shortcuts listen on window, including Enter and Escape.
@@ -109,21 +125,6 @@ export function addCampaignNavigation(root, story) {
       const controls = [input, form.querySelector('[type="submit"]'), closeButton];
       if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1).focus(); }
       else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0].focus(); }
-    }
-  });
-  document.addEventListener('keydown', event => {
-    if (root.dataset.screen !== 'title' || !root.querySelector('.panel').hidden || !overlay.hidden ||
-        event.repeat || event.ctrlKey || event.altKey || event.metaKey || event.isComposing ||
-        /^(INPUT|TEXTAREA|SELECT)$/.test(event.target?.tagName || '') || event.target?.isContentEditable) {
-      presses = 0;
-      return;
-    }
-    presses = event.key.toLowerCase() === 'c' ? presses + 1 : 0;
-    if (presses === 3) {
-      presses = 0;
-      previousFocus = document.activeElement;
-      overlay.hidden = false;
-      input.focus();
     }
   });
   const index = EPISODES.findIndex(([id]) => id === story.id);
@@ -139,6 +140,14 @@ export function addCampaignNavigation(root, story) {
       root.querySelector('.m-debrief .m-actions').prepend(button);
     }
   }
+  return {
+    openDeveloperDialog(trigger) {
+      if (!overlay.hidden) return;
+      previousFocus = trigger || document.activeElement;
+      overlay.hidden = false;
+      input.focus();
+    }
+  };
 }
 function navigate(id) {
   const url = new URL(location.href);

@@ -102,3 +102,25 @@ test('adaptive machine temporarily deploys armor after sustained damage', async 
   assert.equal(enemy.shield, 0);
   assert.equal(enemy.damage(200, enemy.pos, null, 'body'), true);
 });
+
+test('titan telegraphs and exposes its core, changes firing pattern, and can be defeated', async () => {
+  const { game, shots, warnings, killed } = await makeGame();
+  game.physics.nav = { isWalkable: () => true, findPath: (_, to) => [to.clone()] };
+  const boss = game.enemies.spawn('titan', new Vector3(15, 0, 0));
+  assert.equal(boss.hp, 1200);
+  for (let i = 0; i < 51; i++) game.enemies.update(.05);
+  assert.match(warnings[0][0], /타이탄 1단계/);
+  const hit = game.enemies.raycast(new Vector3(boss.pos.x, 5.18, 12), new Vector3(0, 0, -1), 50);
+  assert.equal(hit?.part, 'weak');
+  for (let i = 0; i < 33; i++) game.enemies.update(.05);
+  assert.equal(shots.length, 1);
+  boss.damage(1100, boss.pos, null, 'weak');
+  for (let i = 0; i < 59; i++) game.enemies.update(.05);
+  assert.match(warnings.at(-1)[0], /타이탄 3단계/);
+  for (let i = 0; i < 51; i++) game.enemies.update(.05);
+  assert.equal(shots.length, 4, 'third phase fires three telegraphed shots');
+  assert.equal(boss.damage(200, boss.pos, null, 'weak'), true);
+  assert.equal(killed.at(-1).type, 'titan');
+  game.enemies.clear();
+  assert.equal(game.enemies.spawn('titan', new Vector3()).hp, 1200);
+});

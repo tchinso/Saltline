@@ -14,7 +14,11 @@ export function createEscort(game, from, to, label, options = {}) {
     mesh.castShadow = true;
     root.add(mesh);
   }
-  if (options.style === 'person') {
+  if (options.style === 'device') {
+    box([1.4, 1, 1.2], [0, .5, 0], darkMaterial);
+    box([1.1, .35, .9], [0, 1.15, 0], bodyMaterial);
+    box([.2, 1.3, .2], [0, 1.95, 0], lightMaterial);
+  } else if (options.style === 'person') {
     box([.55, .8, .32], [0, 1.05, 0], bodyMaterial);
     box([.32, .32, .32], [0, 1.65, 0], lightMaterial);
     for (const z of [-.15, .15]) box([.18, .65, .17], [0, .34, z], darkMaterial);
@@ -75,7 +79,7 @@ export function createEscort(game, from, to, label, options = {}) {
       Math.hypot(enemy.pos.x - root.position.x, enemy.pos.z - root.position.z) < 9).length;
     const near = Math.hypot(game.player.pos.x - root.position.x, game.player.pos.z - root.position.z) < 18;
     if (threats) health = Math.max(0, health - Math.min(threats, 3) * 2 * dt);
-    else if (near) progress = Math.min(1, progress + dt / (distance / .85));
+    else if (near) progress = Math.min(1, progress + dt / (options.duration || distance / .85));
     root.position.lerpVectors(from, to, progress);
     renderStatus(threats, near);
     if (health <= 0 || progress >= 1) {

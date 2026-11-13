@@ -1,4 +1,5 @@
 import { addCampaignNavigation } from './campaign-navigation.js';
+import { createDeveloperGesture } from './developer-gesture.js';
 import { menuTemplate } from './menu-template.js';
 import { QUALITY_NAMES, loadSettings, saveSettings } from './settings.js';
 import { QUALITY_PRESETS } from '../core/config.js';
@@ -16,7 +17,8 @@ function createMenus(game, actions) {
     node.textContent = presentation[node.dataset.story] || '';
   });
   t.appendChild(s);
-  addCampaignNavigation(s, game.story);
+  const campaignNavigation = addCampaignNavigation(s, game.story);
+  const developerGesture = createDeveloperGesture();
   let o = U => s.querySelector(U);
   let r = U => [...s.querySelectorAll(U)];
   let a = o(".panel");
@@ -66,18 +68,21 @@ function createMenus(game, actions) {
     }[U] || "기본값"}). 화면이 끊기면 품질을 낮춰라.` : "품질 변경은 즉시 적용되며, 그림자와 반사를 다시 만드는 데 잠시 걸릴 수 있음.";
   }
   u.addEventListener("input", () => {
+    developerGesture.reset();
     n.sens = +u.value;
     v("sens");
     g();
     saveSettings(n);
   });
   h.addEventListener("input", () => {
+    developerGesture.reset();
     n.volume = +h.value / 100;
     v("volume");
     g();
     saveSettings(n);
   });
   f.addEventListener("input", () => {
+    developerGesture.reset();
     n.fov = +f.value;
     v("fov");
     g();
@@ -120,6 +125,7 @@ function createMenus(game, actions) {
     } catch {}
   }
   function S() {
+    developerGesture.reset();
     return a.hidden ? false : (a.hidden = true, s.classList.remove("panel-open"), d && d.focus && s.contains(d) ? d.focus() : H(), true);
   }
   function z(U) {
@@ -136,7 +142,8 @@ function createMenus(game, actions) {
   }
   s.addEventListener("click", U => {
     let T = U.target.closest("button");
-    if (!T || !s.contains(T)) return;
+    if (!T || !s.contains(T)) { developerGesture.reset(); return; }
+    if (T.dataset.act !== 'invert') developerGesture.reset();
     if (game.events.emit("ui:click", {}), T.dataset.q) {
       n.quality = T.dataset.q;
       v("quality");
@@ -149,7 +156,7 @@ function createMenus(game, actions) {
       return;
     }
     let D = T.dataset.act;
-    D === "settings" ? w("settings") : D === "controls" ? w("controls") : D === "close-panel" ? S() : D === "invert" ? (n.invertY = !n.invertY, v("invertY"), g(), saveSettings(n)) : D === "fullscreen" ? M() : D && actions[D] && actions[D](U);
+    D === "settings" ? w("settings") : D === "controls" ? w("controls") : D === "close-panel" ? S() : D === "invert" ? (n.invertY = !n.invertY, v("invertY"), g(), saveSettings(n), developerGesture.toggle() && campaignNavigation.openDeveloperDialog(T)) : D === "fullscreen" ? M() : D && actions[D] && actions[D](U);
   });
   s.addEventListener("mouseover", U => {
     let T = U.target.closest("button");
