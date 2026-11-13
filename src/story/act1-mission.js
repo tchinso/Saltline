@@ -570,7 +570,7 @@ function createAct1Mission(game) {
           if (escort?.active) {
             escort.update(P);
             if (escort.failed) {
-              failMission('수송대가 파괴됐다');
+              failMission(`${escortSpec.label} 보호에 실패했다`);
               return true;
             }
             if (escort.finished) hud.radio && hud.radio(`${escortSpec.label}: 지정 지점에 도착했다.`, 3);

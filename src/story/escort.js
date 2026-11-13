@@ -1,4 +1,8 @@
-import { BoxGeometry, Group, Mesh, MeshStandardMaterial } from '../../vendor/three.js';
+import { BoxGeometry, Group, Mesh, MeshStandardMaterial, Vector3 } from '../../vendor/three.js';
+
+const THREAT_RADIUS = 9;
+const THREAT_WARNING_SECONDS = 3;
+const DAMAGE_PER_THREAT = .75;
 
 // The convoy advances only while the player stays nearby and the route is clear.
 // Nearby hostile machines can destroy it, making protection an actual objective.
@@ -47,15 +51,20 @@ export function createEscort(game, from, to, label, options = {}) {
   let active = false;
   let progress = 0;
   let health = 100;
+  let threatSeconds = 0;
   let finished = false;
   let failed = false;
+  const target = new Vector3();
+  const enemyPoint = new Vector3();
   function renderStatus(threats = 0, near = true) {
-    display.textContent = `${label} · 진행 ${Math.floor(progress * 100)}% · 상태 ${Math.ceil(health)}%${threats ? ' · 공격받는 중' : near ? '' : ' · 가까이에서 호위하라'}`;
+    const warning = threatSeconds < THREAT_WARNING_SECONDS ? ' · 적 접근! 막아라' : ' · 적 접근! 상태 감소 중';
+    display.textContent = `${label} · 진행 ${Math.floor(progress * 100)}% · 상태 ${Math.ceil(health)}%${threats ? warning : near ? '' : ' · 가까이에서 호위하라'}`;
   }
   function reset() {
     active = finished = failed = false;
     progress = 0;
     health = 100;
+    threatSeconds = 0;
     root.position.copy(from);
     root.visible = false;
     display.hidden = true;
@@ -75,11 +84,26 @@ export function createEscort(game, from, to, label, options = {}) {
   }
   function update(dt) {
     if (!active) return;
-    const threats = game.enemies.list.filter(enemy => enemy.alive && enemy.pos &&
-      Math.hypot(enemy.pos.x - root.position.x, enemy.pos.z - root.position.z) < 9).length;
+    target.copy(root.position);
+    target.y += 1;
+    const threats = game.enemies.list.filter(enemy => {
+      if (!enemy.alive || !enemy.pos) return false;
+      // Enemy positions are at ground level for walkers, but at flight height for drones.
+      enemyPoint.copy(enemy.pos);
+      if (enemy.type !== 'gull') enemyPoint.y += 1;
+      return enemyPoint.distanceTo(target) < THREAT_RADIUS &&
+        (!game.physics?.lineOfSight || game.physics.lineOfSight(enemyPoint, target));
+    }).length;
     const near = Math.hypot(game.player.pos.x - root.position.x, game.player.pos.z - root.position.z) < 18;
-    if (threats) health = Math.max(0, health - Math.min(threats, 3) * 2 * dt);
-    else if (near) progress = Math.min(1, progress + dt / (options.duration || distance / .85));
+    if (threats) {
+      const previous = Math.max(0, threatSeconds - THREAT_WARNING_SECONDS);
+      threatSeconds += dt;
+      const exposed = Math.max(0, threatSeconds - THREAT_WARNING_SECONDS) - previous;
+      health = Math.max(0, health - Math.min(threats, 3) * DAMAGE_PER_THREAT * exposed);
+    } else {
+      threatSeconds = 0;
+      if (near) progress = Math.min(1, progress + dt / (options.duration || distance / .85));
+    }
     root.position.lerpVectors(from, to, progress);
     renderStatus(threats, near);
     if (health <= 0 || progress >= 1) {

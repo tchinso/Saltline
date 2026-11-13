@@ -57,8 +57,14 @@ try {
           breakerSeen ||= game.enemies.list.some(enemy => enemy.alive && enemy.type === 'breaker');
           const displayed = !game.hud.root.querySelector('.escort-status').hidden;
           run.queue.length = 0;
-          game.enemies.list.push({ alive: true, pos: mission.escort.root.position.clone() });
-          mission.update(51);
+          game.enemies.clear();
+          const escortPosition = mission.escort.root.position;
+          const destination = game.level.objectives.find(item => item.id === 'stage_4').pos;
+          const exposedEnemy = destination.clone().sub(escortPosition).normalize().multiplyScalar(1).add(escortPosition);
+          game.enemies.list.push({ alive: true, type: 'hound', pos: exposedEnemy });
+          // A visible enemy still destroys an unattended escort after the warning grace period.
+          mission.update(3.1);
+          mission.update(140);
           const failed = mission.state;
           mission.menus.root.querySelector('[data-act="retry"]').click();
           escortFailure = { displayed, failed, state: mission.state, cut: run.cut,
