@@ -1,10 +1,5 @@
 import { BoxGeometry, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, Vector3 } from '../../vendor/three.js';
 
-const HARBOR_SITES = [
-  [-31, 0, 4], [-24, 0, -5], [-16, 0, 4], [-8, 0, -5],
-  [0, 0, 5], [8, 0, -5], [16, 0, 5], [24, 0, -5],
-  [-12, .03, -20], [4, .03, -20]
-];
 const CAMPAIGN_SITES = [
   [-29, 0, -4], [-21, 0, 4], [-13, 0, -4], [-5, 0, 4],
   [3, 0, -4], [11, 0, 4], [19, 0, -4], [27, 0, 4]
@@ -14,8 +9,7 @@ const PICKUP_RADIUS = 1.15;
 
 // Ammo bags restore both the magazine and the regular reserve capacity.
 export function createAmmoBags(game, sites) {
-  const mapId = game.map?.id || '';
-  sites ||= game.level?.ammoSites || (/^m(?:0[1-9]|1[0-9]|2[0-6])_/.test(mapId) ? CAMPAIGN_SITES : HARBOR_SITES);
+  sites ||= game.level?.ammoSites || CAMPAIGN_SITES;
   const root = new Group();
   root.name = 'ammo-bags';
   game.scene.add(root);

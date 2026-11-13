@@ -9,7 +9,6 @@ import { createRandom } from '../src/core/random.js';
 import { fallbacks } from '../src/core/fallbacks.js';
 import { act1Maps } from '../src/content/maps/act1/index.js';
 import { act2Maps } from '../src/content/maps/act2/index.js';
-import { harbor } from '../src/content/maps/harbor/index.js';
 import '../src/world/props/industrial.js';
 import '../src/world/props/register.js';
 
@@ -49,7 +48,7 @@ test('ammo bag refills magazine and reserve without discarding bonuses and respa
 });
 
 test('existing campaign maps place reachable ammo bags along their routes', async () => {
-  for (const map of [harbor, ...act1Maps, ...act2Maps]) {
+  for (const map of [...act1Maps, ...act2Maps]) {
     const game = { THREE, map, scene: new Scene(), world: map.world, mats: fallbacks.mats(), rng: createRandom(), quality: {}, params: {} };
     game.physics = createPhysics(game);
     game.props = createProps(game);

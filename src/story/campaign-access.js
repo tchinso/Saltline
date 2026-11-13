@@ -21,6 +21,12 @@ export function campaignAccess(params, stories, storage = null) {
   let developerMode = false;
   try { developerMode = storage?.getItem(DEVELOPER_KEY) === 'enabled'; } catch { /* Treat inaccessible storage as locked. */ }
   const progress = loadCampaignProgress(storage);
+  // Old prototype links should open a playable episode after its removal.
+  if (result.story === 'harbormaster' || result.map === 'harbor') {
+    result.story = lastAccessibleEpisode(progress);
+    delete result.map;
+    return { params: result, redirected: true, changed: true, removedOperation: true };
+  }
   const candidates = [result.story];
   if (result.map) candidates.push(stories.find(story => story.mapId === result.map)?.id);
   const futureEpisode = numericStory && Number(numericStory[1]) > EPISODES.length;

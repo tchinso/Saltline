@@ -183,11 +183,11 @@ async function boot() {
       cam: [...f.cam, ...(f.target || [0, 1, 0])].join(",")
     });
   } else {
-    await setBootProgress("컨테이너 배치 중", .34);
+    await setBootProgress("작전 지역 준비 중", .34);
     await loadSystem("level", "level", () => game.map.createLevel(game), true);
-    await setBootProgress("크레인 설치 중", .5);
+    await setBootProgress("배경 준비 중", .5);
     await loadSystem("backdrop", "backdrop", () => game.map.createBackdrop(game));
-    await setBootProgress("항만 지면 준비 중", .58);
+    await setBootProgress("지형 준비 중", .58);
     await loadSystem("ground", "ground", () => game.map.createGround(game));
     if (game.ground.stub) {
       let h = createMesh(new PlaneGeometry(400, 400).rotateX(-Math.PI / 2), game.mats.get("asphalt"), {
@@ -205,13 +205,15 @@ async function boot() {
     await setBootProgress("소총 점검 중", .74);
     await loadSystem("weapon", "weapon", () => createWeapon(game));
     game.ammoBags = createAmmoBags(game);
-    await setBootProgress("하버마스터 기동 중", .82);
+    await setBootProgress("적 전력 준비 중", .82);
     await loadSystem("enemies", "enemies", () => createEnemies(game));
     await loadSystem("hud", "hud", () => createHud(game));
     game.game = game.story.createMission(game);
     if (access.redirected) {
       const note = game.game.menus?.root?.querySelector('.m-note');
-      if (note) note.textContent = '아직 열리지 않은 화입니다. 현재 접근할 수 있는 마지막 화로 이동했습니다.';
+      if (note) note.textContent = access.removedOperation
+        ? '기존 항만 작전이 종료되어 현재 접근할 수 있는 마지막 화로 이동했습니다.'
+        : '아직 열리지 않은 화입니다. 현재 접근할 수 있는 마지막 화로 이동했습니다.';
     }
   }
   await setBootProgress("첫 장면 준비 중", .92);

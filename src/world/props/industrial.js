@@ -2447,7 +2447,7 @@ function B3(i, e = {}) {
     font: "stencil",
     distress: .15
   }), .12, .013 + O / 2, U + .02, .018, null, O - .1);
-  o.decal(Mi(i, "HARBORMASTER UPLINK", {
+  o.decal(Mi(i, "CONTROL UPLINK", {
     color: "white",
     font: "sans",
     distress: .15

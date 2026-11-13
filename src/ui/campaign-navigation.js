@@ -72,13 +72,6 @@ export function addCampaignNavigation(root, story) {
     if (current >= 0 && !isEpisodeUnlocked(current, progress)) navigate(lastAccessibleEpisode(progress));
   });
   updateDeveloperMode();
-  if (story.id !== 'harbormaster') {
-    const original = document.createElement('button');
-    original.className = 'btn small';
-    original.textContent = '기존 항만 작전';
-    original.addEventListener('click', () => navigate('harbormaster'));
-    picker.appendChild(original);
-  }
   titleActions.after(picker);
   const overlay = document.createElement('div');
   overlay.className = 'developer-overlay';

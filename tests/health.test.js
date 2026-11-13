@@ -61,9 +61,6 @@ test('campaign supplies follow the inland route and the hospital choice adds bri
     const act2 = makeGame();
     act2.map = { id: 'm07_lab' };
     assert.equal(createMedkits(act2).points.length, 12);
-    const harbor = makeGame();
-    harbor.map = { id: 'harbor' };
-    assert.equal(createMedkits(harbor).points.length, 12);
   } finally {
     if (previousStorage === undefined) delete globalThis.localStorage;
     else globalThis.localStorage = previousStorage;

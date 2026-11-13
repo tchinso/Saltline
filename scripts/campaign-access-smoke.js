@@ -37,8 +37,17 @@ try {
   await page.evaluate(() => localStorage.setItem('saltline.developer-mode.v1', 'enabled'));
   await visit('story=21', 'm21');
   await visit('map=m21_underground', 'm21');
+  for (const query of ['story=harbormaster', 'map=harbor']) {
+    result = await visit(query, 'm15');
+    assert.match(result.url, /story=m15/);
+    assert.ok(!result.url.includes('map='));
+  }
   await page.evaluate(() => localStorage.removeItem('saltline.developer-mode.v1'));
-  await visit('story=harbormaster', 'harbormaster');
+  for (const query of ['story=harbormaster', 'map=harbor']) {
+    result = await visit(query, 'm15');
+    assert.match(result.url, /story=m15/);
+    assert.ok(!result.url.includes('map='));
+  }
   assert.deepEqual(failures, []);
-  console.log('Campaign access passed: numeric and map URLs, fallback, replay, skipped episodes, developer mode and harbor.');
+  console.log('Campaign access passed: numeric and map URLs, fallback, replay, skipped episodes, developer mode and retired harbor links.');
 } finally { await browser.close(); }

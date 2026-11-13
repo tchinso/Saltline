@@ -39,7 +39,7 @@ export const menuTemplate = `
           <button class="btn" data-act="settings">설정</button>
           <button class="btn m-only-narrow" data-act="controls">조작법</button>
         </div>
-        <p class="m-note">항구의 풍경과 기계, 소리는 브라우저에서 실시간으로 만들어진다.</p>
+        <p class="m-note">각 화를 완료하면 다음 화가 열립니다. 선택 목표는 작전 결과에 기록됩니다.</p>
       </div>
       <aside class="m-legend" aria-label="조작법 요약">
         <div><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동</span><span><kbd>마우스</kbd> 시점</span><span><kbd>왼쪽 클릭</kbd> 사격</span><span><kbd>오른쪽 클릭</kbd> 조준</span><span><kbd>R</kbd> 재장전</span></div>
@@ -71,7 +71,7 @@ export const menuTemplate = `
     <section class="m-screen m-card m-dead" data-s="dead" aria-label="신호 끊김">
       <div class="m-k">돌입 대원 전투 불능</div>
       <h2 class="m-h">신호 끊김</h2>
-      <dl class="m-stats"><div><dt>생존 시간</dt><dd data-f="dead-time">00:00</dd></div><div><dt>차단한 중계기</dt><dd data-f="dead-relays">0/3</dd></div></dl>
+      <dl class="m-stats"><div><dt>생존 시간</dt><dd data-f="dead-time">00:00</dd></div><div><dt>완료한 주 목표</dt><dd data-f="dead-relays">0/3</dd></div></dl>
       <div class="m-actions col"><button class="btn primary" data-act="retry">다시 도전</button></div>
     </section>
 

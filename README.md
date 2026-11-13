@@ -24,7 +24,7 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-이미 설치된 브라우저는 `BROWSER_PATH`, 다른 서버는 `GAME_URL`로 지정할 수 있습니다. 테스트 결과 이미지는 `test-results/`에 저장됩니다. 브라우저 검증은 고정된 기존 항만 맵의 오브젝트 수와 임무 진행을 검사하므로, 맵을 의도적으로 수정하면 기대값도 검토합니다.
+이미 설치된 브라우저는 `BROWSER_PATH`, 다른 서버는 `GAME_URL`로 지정할 수 있습니다. 테스트 결과 이미지는 `test-results/`에 저장됩니다. 브라우저 검증은 캠페인 시작과 임무 진행을 검사합니다.
 
 ## 소스 구조
 
@@ -33,9 +33,9 @@ npm run test:browser
 | `index.html` / `game.js` | 화면 기본 골격 / 실행 진입점 |
 | `src/app/` | 시스템 생성 순서, 프레임 루프, 디버그 쇼케이스·벤치마크 |
 | `src/content/` | 맵·스토리 등록, 콘텐츠 정의 |
-| `src/content/maps/harbor/` | 기존 항만의 지형·건물·소품 배치·스폰·카메라 경로 |
-| `src/content/stories/harbormaster.js` | 대사, 웨이브 설정, 임무 문구, 메뉴·장소 표시 |
-| `src/story/` | 임무 상태 전환, 중계기 상호작용, 적 증원, 타이틀 카메라 |
+| `src/content/maps/act1/` ~ `act4/` | 캠페인 맵의 지형·배치·스폰·카메라 경로 |
+| `src/content/stories/` | 에피소드별 대사·목표·등장 설정 |
+| `src/story/` | 임무 상태 전환, 목표 상호작용, 적 증원, 타이틀 카메라 |
 | `src/world/` | 맵 공용 물리·내비게이션, 레벨 빌더, 소품 등록·생성 |
 | `src/player/`, `src/combat/`, `src/weapon/`, `src/enemies/` | 입력·이동, 전투 집계, 무기, 적 |
 | `src/render/`, `src/effects/`, `src/audio/`, `src/geometry/` | 렌더링, 효과, 합성 음향, 공용 형상 |
@@ -48,21 +48,21 @@ npm run test:browser
 ## 스토리 추가
 
 1. `src/content/stories/`에 새 정의를 만들고 고유한 `id`, 연결할 `mapId`, `title`, `createMission`을 지정합니다.
-2. 기존 중계기 임무를 재사용하려면 `createRelayMission`과 기존 스토리의 `tuning`, `dialogue`, `presentation`, `objectiveText` 형식을 사용합니다. 대사·웨이브 배열과 표시 문구는 새 스토리에 맞게 작성합니다.
+2. 캠페인 임무를 재사용하려면 `createAct1Mission`과 기존 에피소드의 목표·대사·출현 설정을 참고해 새 이야기에 맞게 작성합니다.
 3. `src/content/index.js`의 `stories`에 등록합니다. `?story=새-id`로 실행합니다.
 
-다른 규칙의 임무는 별도 `createMission(game)`을 구현합니다. 반환 객체에는 `state`, `start(options)`, `update(dt)`가 필요합니다. `update`의 `false` 반환은 플레이어·무기·적 시뮬레이션을 멈춥니다. 기존 상태 이름은 `title`, `intro`, `playing`, `paused`, `dead`, `complete`입니다. 공용 메뉴는 `game.story.presentation`을 표시합니다. 기존 중계기 컨트롤러는 gull/hound 적과 중계기→탈출 규칙을 담당하며, 모든 장르의 임무를 해석하는 범용 스토리 엔진은 아닙니다.
+다른 규칙의 임무는 별도 `createMission(game)`을 구현합니다. 반환 객체에는 `state`, `start(options)`, `update(dt)`가 필요합니다. `update`의 `false` 반환은 플레이어·무기·적 시뮬레이션을 멈춥니다. 기존 상태 이름은 `title`, `intro`, `playing`, `paused`, `dead`, `complete`입니다. 공용 메뉴는 `game.story.presentation`을 표시합니다.
 
 ## 맵 추가
 
-1. `src/content/maps/새-맵/`에 `world`와 `createLevel`, `createBackdrop`, `createGround` 팩토리를 만듭니다. 항만 전용 바다·크레인·창고는 기존 항만 폴더 안에 있습니다.
+1. `src/content/maps/새-맵/`에 `world`와 `createLevel`, `createBackdrop`, `createGround` 팩토리를 만듭니다.
 2. `world`에는 `min`, `max`(Vector3), `groundY`, `seaY`, `quayX`, `navigation: { minX, maxX, minZ, maxZ, cellSize }`를 정의합니다. 현재 공용 물리는 평면 지면과 X축 기준 부두·수면 경계를 사용합니다. 복층 지형은 콜라이더로 추가하며, 다른 형태의 수면·지형은 물리 인터페이스를 확장해야 합니다.
-3. `createLevel(game)`에서 `game.physics.addBox`로 콜라이더를 등록하고 씬에 오브젝트를 추가합니다. 기존 중계기 임무의 레벨 계약은 아래와 같습니다.
+3. `createLevel(game)`에서 `game.physics.addBox`로 콜라이더를 등록하고 씬에 오브젝트를 추가합니다. 캠페인 맵의 레벨 계약은 기존 ACT 맵을 참고합니다. 기본 구조는 아래와 같습니다.
 
 ```js
 {
   playerStart: { pos: Vector3, yaw: 0 },
-  objectives: [{ id: 'relay_a', label: '중계기 A', pos: Vector3, object: relayMesh }],
+  objectives: [{ id: 'stage_1', label: '첫 목표', pos: Vector3, object: objectiveMesh }],
   extraction: { pos: Vector3, radius: 2.5 },
   enemySpawns: [{ pos: Vector3, type: 'ground', zone: 'yard' }], // 또는 air
   cinematicPath: [{ pos: [0, 2, 0], look: [0, 2, -1] }],
@@ -72,7 +72,7 @@ npm run test:browser
 }
 ```
 
-`object.userData.setState('live' | 'cutting' | 'cut')`는 중계기 시각 상태를 갱신합니다. 스폰·엄폐물 Vector3는 매 생성 시 새 객체로 만듭니다. 경로 보정이 좌표를 수정할 수 있습니다. 새 맵과 스토리를 `src/content/index.js`에 함께 등록하면 `?map=새-id` 또는 `?story=새-id`로 실행할 수 있습니다. 잘못된 ID·중복 ID·맵/스토리 조합은 명시적으로 거부합니다.
+`object.userData.setState('live' | 'cutting' | 'cut')`는 목표물의 시각 상태를 갱신합니다. 스폰·엄폐물 Vector3는 매 생성 시 새 객체로 만듭니다. 경로 보정이 좌표를 수정할 수 있습니다. 새 맵과 스토리를 `src/content/index.js`에 함께 등록하면 `?map=새-id` 또는 `?story=새-id`로 실행할 수 있습니다. 잘못된 ID·중복 ID·맵/스토리 조합은 명시적으로 거부합니다.
 
 ## 유지보수 참고
 
@@ -82,7 +82,7 @@ npm run test:browser
 
 ## 캠페인 ACT 1~4
 
-기본 시작 화면은 1화입니다. **캠페인 화 선택**에서 완료한 화를 다시 선택할 수 있으며, 각 화를 완료하면 다음 화가 열립니다. 기존 항만 작전도 여기서 선택할 수 있습니다. 개발자 모드에서는 `?story=m01`부터 `?story=m26`까지 직접 열 수 있습니다. 일반 모드에서 아직 열리지 않은 화를 주소로 요청하면 접근 가능한 마지막 화로 이동합니다. 캠페인 진행과 선택 목표는 브라우저의 별도 로컬 저장소에 기록되므로 브라우저 데이터를 지우면 함께 삭제됩니다.
+기본 시작 화면은 1화입니다. **캠페인 화 선택**에서 완료한 화를 다시 선택할 수 있으며, 각 화를 완료하면 다음 화가 열립니다. 개발자 모드에서는 `?story=m01`부터 `?story=m26`까지 직접 열 수 있습니다. 일반 모드에서 아직 열리지 않은 화를 주소로 요청하면 접근 가능한 마지막 화로 이동합니다. 캠페인 진행과 선택 목표는 브라우저의 별도 로컬 저장소에 기록되므로 브라우저 데이터를 지우면 함께 삭제됩니다.
 
 각 화는 작전 시작 전 브리핑을 직접 넘겨 읽을 수 있습니다. 전투 중 놓친 내용은 일시정지 화면의 **지금까지의 이야기**에서 확인하고, 완료 후에는 선택 결과와 작전 중 대화도 다시 볼 수 있습니다. 화마다 장소와 사건에 맞는 색감과 절차적으로 연주되는 배경음악이 적용됩니다.
 

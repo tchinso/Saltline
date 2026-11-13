@@ -43,7 +43,7 @@ function TC() {
   t("model", "PAC-9", `700 78px ${o}`, r);
   t("maker", "LONGSHORE ARMS WORKS  \xB7  RELNOR", `600 30px ${n}`, r);
   t("cal", "CAL 5.8\xD740   SN PA-004217", `500 27px ${s}`, r);
-  t("prop", "PROPERTY OF PORT AUTHORITY \u2014 BERTH 4 ARMOURY", `600 28px ${n}`, r);
+  t("prop", "PROPERTY OF DEFENCE FORCES \u2014 ARMOURY", `600 28px ${n}`, r);
   t("safe", "S", `700 30px ${n}`, r, "center");
   t("semi", "1", `700 30px ${n}`, r, "center");
   t("auto", "A", `700 30px ${n}`, "rgba(205,60,40,0.95)", "center");

@@ -1,5 +1,5 @@
 import { createAct1Mission } from '../../story/act1-mission.js';
-import { harbormaster } from './harbormaster.js';
+import { missionTuning } from './mission-tuning.js';
 
 const step = (label, prompt, dialogue, wave = null, extra = {}) => ({ label, prompt, dialogue, wave, duration: 2, ...extra });
 const choice = (label, prompt, dialogue, flag) => ({ label, prompt, dialogue, flag, duration: 2, optional: true });
@@ -155,7 +155,7 @@ const episodes = [
 export const act4Stories = episodes.map((episode, index) => ({
   id:episode.id, mapId:episode.mapId, title:`제${index+22}화 · ${episode.title}`,
   narrative:narratives[episode.id],
-  createMission:createAct1Mission, tuning:episode.noPursuit ? { ...harbormaster.tuning, pursuitExtra:0 } : harbormaster.tuning,
+  createMission:createAct1Mission, tuning:episode.noPursuit ? { ...missionTuning, pursuitExtra:0 } : missionTuning,
   ...(episode.escort ? { escort:episode.escort } : {}), ...(episode.boss ? { boss:episode.boss } : {}),
   ...(episode.supply ? { supply:episode.supply } : {}), ...(episode.bonusSupply ? { bonusSupply:episode.bonusSupply } : {}),
   ...(episode.hold ? { hold:episode.hold } : {}), ...(episode.flagHint ? { flagHint:episode.flagHint } : {}),

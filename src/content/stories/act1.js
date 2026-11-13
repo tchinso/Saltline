@@ -1,5 +1,5 @@
 import { createAct1Mission } from '../../story/act1-mission.js';
-import { harbormaster } from './harbormaster.js';
+import { missionTuning } from './mission-tuning.js';
 
 const step = (label, prompt, dialogue, wave = null) => ({ label, prompt, dialogue, duration: 2, wave });
 const choice = (label, prompt, dialogue, flag) => ({ label, prompt, dialogue, flag, duration: 2, optional: true });
@@ -142,7 +142,7 @@ export const act1Stories = episodes.map((episode, index) => ({
   id: episode.id, mapId: episode.mapId, title: `제${index + 1}화 · ${episode.title}`,
   createMission: createAct1Mission,
   narrative: narratives[episode.id],
-  tuning: harbormaster.tuning,
+  tuning: missionTuning,
   ...(episode.id === 'm06' ? { breaker: { objectiveId: 'stage_3', position: [25, 0, 0] } } : {}),
   dialogue: { intro: episode.intro, done: episode.done, contact: '연우: 기계 병력이 접근한다. 엄폐물을 이용해라.', low: '연우: 부상 상태다. 주변의 의료품을 찾아라.' },
   objectives: [

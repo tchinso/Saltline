@@ -4,7 +4,6 @@ import { browserCampaignStorage, campaignAccess } from '../src/story/campaign-ac
 import { EPISODES, isEpisodeUnlocked, loadCampaignProgress, recordMissionComplete } from '../src/story/campaign-progress.js';
 
 const stories = EPISODES.map(([id]) => ({ id, mapId: `${id}_map` }));
-stories.push({ id: 'harbormaster', mapId: 'harbor' });
 function storage(completed = [], developer = false) {
   const values = { 'saltline.campaign.v1': JSON.stringify({ version: 1, completed, flags: [] }),
     'saltline.developer-mode.v1': developer ? 'enabled' : null };
@@ -40,7 +39,17 @@ test('map URLs and mismatched story/map combinations cannot bypass campaign lock
   assert.deepEqual(campaignAccess({ story: 'm01', map: 'm21_map' }, stories, saved).params, { story: 'm03' });
   assert.deepEqual(campaignAccess({ story: 'm21', map: 'harbor' }, stories, saved).params, { story: 'm03' });
   assert.equal(campaignAccess({ map: 'm02_map' }, stories, saved).redirected, false);
-  assert.equal(campaignAccess({ story: 'harbormaster', map: 'harbor' }, stories, saved).redirected, false);
+});
+
+test('retired harbor links fall back to the last accessible episode, including in developer mode', () => {
+  for (const developer of [false, true]) {
+    const saved = storage(['m01', 'm02'], developer);
+    for (const params of [{ story: 'harbormaster' }, { map: 'harbor' }, { story: 'harbormaster', map: 'harbor' }]) {
+      const result = campaignAccess({ ...params, q: 'test' }, stories, saved);
+      assert.deepEqual(result.params, { story: 'm03', q: 'test' });
+      assert.equal(result.redirected, true);
+    }
+  }
 });
 
 test('developer access is separate from progress; broken storage safely starts from episode one', () => {

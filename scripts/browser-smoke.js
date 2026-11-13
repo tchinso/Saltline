@@ -17,11 +17,12 @@ try {
     // Report application failures, excluding machine-installed browser userscripts.
     if (!error.stack?.includes('.user.js')) failures.push(error.message);
   });
-  await page.goto(`${process.env.GAME_URL || 'http://127.0.0.1:4173/'}?story=harbormaster&q=test&dt=0.016`);
+  await page.goto(`${process.env.GAME_URL || 'http://127.0.0.1:4173/'}?q=test&dt=0.016`);
   await page.waitForFunction(() => window.__ready || window.__fatal, {}, { timeout: 180000 });
   assert.equal(await page.evaluate(() => window.__fatal), null);
   assert.equal(await page.evaluate(() => window.__ready), true);
-  assert.equal(await page.locator('.m-word').textContent(), '렐노르');
+  assert.equal(await page.locator('.m-brand').textContent(), '렐노르');
+  assert.match(await page.locator('.m-word').textContent(), /평범한 하루/);
   const flow = await page.evaluate(() => {
     const game = window.__G;
     // Stop automatic frames while exercising state transitions deterministically.
@@ -41,7 +42,12 @@ try {
     const paused = game.game.state;
     game.game.resume();
     const resumed = game.game.state;
-    for (let i = 0; i < game.level.objectives.length; i++) game.game.debugCut();
+    for (let i = 0; i < 4; i++) {
+      game.game.debugCut();
+      game.game.run.queue.length = 0;
+      game.enemies.clear();
+      game.game.update(.016);
+    }
     const cut = game.game.run.cut;
     game.player.pos.copy(game.level.extraction.pos);
     game.game.update(.016);
@@ -51,13 +57,11 @@ try {
     game.player.damage(1000, null);
     const dead = game.game.state;
     game.game.start({ skipIntro: true });
-    return { start, patrol, fired, reloaded, paused, resumed, cut, complete, reset, dead,
-      stats: game.level.stats, spawns: game.level.enemySpawns.length };
+    return { start, patrol, fired, reloaded, paused, resumed, cut, complete, reset, dead };
   });
   assert.deepEqual(flow, {
-    start: 'playing', patrol: 3, fired: true, reloaded: true, paused: 'paused', resumed: 'playing', cut: 3,
-    complete: 'complete', reset: 0, dead: 'dead',
-    stats: { labelsAtlased: 96, containers: 47, props: 298, tris: 793592, meshes: 125 }, spawns: 42
+    start: 'playing', patrol: 3, fired: true, reloaded: true, paused: 'paused', resumed: 'playing', cut: 4,
+    complete: 'complete', reset: 0, dead: 'dead'
   });
   // Check responsive CSS without rebuilding the expensive scene.
   await page.setViewportSize({ width: 390, height: 844 });
@@ -77,7 +81,7 @@ try {
   const errors = await page.evaluate(() => window.__errors);
   assert.deepEqual(errors, []);
   assert.deepEqual(failures, []);
-  console.log('Browser smoke passed: rendering, audio boot, firing/reload, patrol, pause/resume, relays, extraction, retry, death, mobile layout.');
+  console.log('Browser smoke passed: rendering, audio boot, firing/reload, patrol, pause/resume, objectives, extraction, retry, death, mobile layout.');
 } finally {
   await browser.close();
 }
