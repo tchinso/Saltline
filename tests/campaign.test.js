@@ -22,6 +22,9 @@ test('campaign progress unlocks episodes and retains independent choices across 
   assert.equal(isEpisodeUnlocked(6, progress), false, 'ACT 2 stays locked until M06');
   progress = recordMissionComplete('m06', [], storage);
   assert.equal(isEpisodeUnlocked(6, progress), true, 'M06 unlocks M07');
+  assert.equal(isEpisodeUnlocked(13, progress), false, 'ACT 3 stays locked until M13');
+  progress = recordMissionComplete('m13', [], storage);
+  assert.equal(isEpisodeUnlocked(13, progress), true, 'M13 unlocks M14');
 });
 
 test('ACT 1 registers six distinct maps and valid main and optional objectives', () => {
@@ -46,4 +49,15 @@ test('ACT 2 episodes are registered with distinct maps and persistent optional c
     assert.ok(story.objectives.some(o => o.optional && o.flag));
   }
   assert.equal(maps.size, 7);
+});
+
+test('ACT 3 episodes are registered with distinct maps and persistent optional choices', () => {
+  const maps = new Set();
+  for (const [id] of EPISODES.slice(13, 21)) {
+    const { story, map } = content.resolve({ story: id });
+    maps.add(map.id);
+    assert.deepEqual(story.objectives.filter(o => !o.optional).map(o => o.id), ['stage_1', 'stage_2', 'stage_3', 'stage_4']);
+    assert.ok(story.objectives.some(o => o.optional && o.flag));
+  }
+  assert.equal(maps.size, 8);
 });

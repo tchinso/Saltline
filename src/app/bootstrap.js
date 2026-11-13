@@ -19,6 +19,7 @@ import { createCombat } from '../combat/combat.js';
 import { createAudio } from '../audio/audio.js';
 import { createPlayer } from '../player/player.js';
 import { createMedkits } from '../player/medkits.js';
+import { createAmmoBags } from '../player/ammo-bags.js';
 import { createWeapon } from '../weapon/weapon.js';
 import { createEnemies } from '../enemies/enemies.js';
 import { createHud } from '../ui/hud.js';
@@ -191,6 +192,7 @@ async function boot() {
     game.combat = createCombat(game);
     await setBootProgress("소총 점검 중", .74);
     await loadSystem("weapon", "weapon", () => createWeapon(game));
+    game.ammoBags = createAmmoBags(game);
     await setBootProgress("하버마스터 기동 중", .82);
     await loadSystem("enemies", "enemies", () => createEnemies(game));
     await loadSystem("hud", "hud", () => createHud(game));

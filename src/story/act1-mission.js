@@ -84,6 +84,7 @@ function createAct1Mission(game) {
     level.objectives.find(o => o.id === escortSpec.objectiveId).pos,
     level.objectives.find(o => o.id === (escortSpec.destinationId || 'stage_4')).pos, escortSpec.label, escortSpec) : null;
   const reconIntel = game.story.reconIntel && loadCampaignProgress().flags.includes('flag_recon_intel');
+  const flagHint = game.story.flagHint && loadCampaignProgress().flags.includes(game.story.flagHint.flag) ? game.story.flagHint.text : '';
   let run = {
     time: 0,
     retries: 0,
@@ -99,6 +100,7 @@ function createAct1Mission(game) {
     lowSaid: false,
     extractHint: 0,
     intensity: .15,
+    holdRemaining: 0,
     used: new Map()
   };
   let stateTime = 0;
@@ -169,6 +171,7 @@ function createAct1Mission(game) {
     run.contactSaid = false;
     run.lowSaid = false;
     run.extractHint = 0;
+    run.holdRemaining = 0;
     run.used.clear();
     run.relays = definitions.map(def => {
       const objective = getObjectives().find(o => o.id === def.id);
@@ -256,9 +259,11 @@ function createAct1Mission(game) {
     hud.setObjective(objectiveText());
     transitionTo("playing");
     if (reconIntel) hud.radio && hud.radio('정찰팀의 기록으로 알려진 경계 위치가 표시됩니다.', 4);
+    if (flagHint) hud.radio && hud.radio(flagHint, 5);
     updateInputHint(true);
   }
   function objectiveText() {
+    if (run.holdRemaining > 0) return `${game.story.hold.label} · ${Math.ceil(run.holdRemaining)}초`;
     return run.clearing ? (escort?.active ? `${escortSpec.label}을(를) 호위하고 접근하는 적을 제압하라` : "접근하는 적을 제압하라") : run.allCut ? (game.story.extractionText || "합류 지점으로 이동하라") : mainDefinitions[run.cut].label;
   }
   function updateInputHint(P) {
@@ -345,6 +350,11 @@ function createAct1Mission(game) {
       game.weapon.addAmmo(supply.ammo);
       hud.message(`보급 확보 — 예비탄 ${supply.ammo}발`, 5);
     }
+    const bonus = game.story.bonusSupply;
+    if (bonus?.objectiveId === item.id && loadCampaignProgress().flags.includes(bonus.flag)) {
+      game.weapon.addAmmo(bonus.ammo);
+      hud.message(`${bonus.label} — 예비탄 ${bonus.ammo}발`, 5);
+    }
     if (Number.isInteger(item.def.wave)) {
       queueWave(item.def.wave);
       run.clearing = !item.def.noClear;
@@ -358,6 +368,10 @@ function createAct1Mission(game) {
     if (bossSpec?.objectiveId === item.id) {
       const boss = game.enemies.spawn(bossSpec.type, new Vector3(...bossSpec.position), { state: 'alert', target: player.pos });
       if (!boss) throw new Error(`Failed to spawn ${bossSpec.type}`);
+      run.clearing = true;
+    }
+    if (game.story.hold?.objectiveId === item.id) {
+      run.holdRemaining = game.story.hold.seconds;
       run.clearing = true;
     }
     if (!item.def.optional && run.cut >= mainDefinitions.length) {
@@ -439,6 +453,15 @@ function createAct1Mission(game) {
           }
           if (updateInteraction(P), mission.state !== "playing") return true;
           updateWaves(P);
+          if (run.holdRemaining > 0) {
+            run.holdRemaining = Math.max(0, run.holdRemaining - P);
+            if (run.holdRemaining === 0) {
+              run.clearing = false;
+              if (game.story.hold.done) hud.radio?.(game.story.hold.done, 4);
+              updateMarkers();
+            }
+            hud.setObjective(objectiveText());
+          }
           if (escort?.active) {
             escort.update(P);
             if (escort.failed) {
@@ -447,7 +470,7 @@ function createAct1Mission(game) {
             }
             if (escort.finished) hud.radio && hud.radio(`${escortSpec.label}: 지정 지점에 도착했다.`, 3);
           }
-          if (run.clearing && !escort?.active && !run.queue.length && aliveCount() === 0) {
+          if (run.clearing && run.holdRemaining <= 0 && !escort?.active && !run.queue.length && aliveCount() === 0) {
             run.clearing = false;
             hud.setObjective(objectiveText());
             updateMarkers();

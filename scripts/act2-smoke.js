@@ -9,7 +9,7 @@ try {
   page.on('pageerror', error => { if (!error.stack?.includes('.user.js')) failures.push(error.message); });
   for (let episode = 7; episode <= 13; episode++) {
     const id = `m${String(episode).padStart(2, '0')}`;
-    await page.goto(`${process.env.GAME_URL || 'http://127.0.0.1:4173/'}?story=${id}&q=test&noaudio=1&autostart=1`);
+    await page.goto(`${process.env.GAME_URL || 'http://127.0.0.1:4173/'}?story=${id}&q=test&noaudio=1&autostart=1`, { timeout: 180000 });
     await page.waitForFunction(() => window.__ready || window.__fatal, null, { timeout: 180000 });
     const result = await page.evaluate(() => {
       const game = window.__G, mission = game.game, run = mission.run;

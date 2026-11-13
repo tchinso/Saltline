@@ -112,6 +112,7 @@ function createPlayer(game) {
       C.vel.set(0, 0, 0);
       C.health = C.maxHealth;
       game.medkits && game.medkits.reset();
+      game.ammoBags && game.ammoBags.reset();
       C.alive = true;
       C.onGround = true;
       C.sprinting = false;

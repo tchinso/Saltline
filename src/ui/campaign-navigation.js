@@ -18,10 +18,10 @@ export function addCampaignNavigation(root, story) {
   list.tabIndex = 0;
   list.setAttribute('aria-label', '화 선택 목록, 스크롤하여 전체 보기');
   EPISODES.forEach(([id, name], index) => {
-    if (index === 0 || index === 6) {
+    if (index === 0 || index === 6 || index === 13) {
       const act = document.createElement('span');
       act.className = 'campaign-act';
-      act.textContent = index === 0 ? 'ACT 1 · 반란의 시작' : 'ACT 2 · 인류의 반격';
+      act.textContent = index === 0 ? 'ACT 1 · 반란의 시작' : index === 6 ? 'ACT 2 · 인류의 반격' : 'ACT 3 · 기계의 역습';
       list.appendChild(act);
     }
     const button = document.createElement('button');

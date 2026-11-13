@@ -4,7 +4,7 @@ const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
 const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_PATH ? { executablePath: process.env.BROWSER_PATH } : {}), args: ['--enable-unsafe-swiftshader'] });
 try {
-  const page = await browser.newPage({ viewport: { width: 960, height: 640 } });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   const errors = [];
   page.on('pageerror', error => { if (!error.stack?.includes('.user.js')) errors.push(error.message); });
   const url = `${process.env.GAME_URL || 'http://127.0.0.1:4173/'}?q=test&noaudio=1`;
@@ -27,12 +27,22 @@ try {
   assert.equal(await input.isVisible(), false);
   assert.equal(await last.isEnabled(), true);
   assert.equal(await page.evaluate(() => localStorage.getItem('saltline.campaign.v1')), progressBefore);
+  // The invisible location card previously intercepted clicks on episodes 7–9.
+  for (const index of [6, 7, 8]) {
+    const episode = page.locator('.campaign-episodes button').nth(index);
+    await episode.scrollIntoViewIfNeeded();
+    await episode.hover();
+    assert.equal(await episode.evaluate(element => {
+      const rect = element.getBoundingClientRect();
+      return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === element;
+    }), true);
+  }
   await last.click();
-  await page.waitForFunction(() => window.__ready && window.__G?.story.id === 'm13', null, { timeout: 180000 });
+  await page.waitForFunction(() => window.__ready && window.__G?.story.id === 'm21', null, { timeout: 180000 });
   await page.locator('.campaign-picker summary').click();
   assert.equal(await page.locator('.campaign-episodes button').last().isEnabled(), true);
   await page.reload();
-  await page.waitForFunction(() => window.__ready && window.__G?.story.id === 'm13', null, { timeout: 180000 });
+  await page.waitForFunction(() => window.__ready && window.__G?.story.id === 'm21', null, { timeout: 180000 });
   await page.locator('.campaign-picker summary').click();
   assert.equal(await page.locator('.campaign-episodes button').last().isEnabled(), true);
   await page.locator('.developer-disable').click();

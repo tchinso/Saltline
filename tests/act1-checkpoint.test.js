@@ -11,12 +11,13 @@ function setup() {
   };
   const weapon = { ammo: 9, reserve: 53, reset() { this.ammo = 30; this.reserve = 120; } };
   const medkits = { points: [{ remaining: 25, model: { visible: false } }, { remaining: 0, model: { visible: true } }] };
+  const ammoBags = { points: [{ remaining: 37, model: { visible: false } }, { remaining: 0, model: { visible: true } }] };
   const enemies = {
     list: [{ type: 'hound', pos: new Vector3(12, 0, 4), hp: 48, alive: true, mode: 'engage' }],
     clear() { this.list.length = 0; },
     spawn(type, pos, options) { const enemy = { type, pos, hp: 140, alive: true, mode: options.state }; this.list.push(enemy); return enemy; }
   };
-  const game = { player, weapon, medkits, enemies, fx: { clear() {} }, combat: { stats: { shots: 12, hits: 7, kills: 2 } } };
+  const game = { player, weapon, medkits, ammoBags, enemies, fx: { clear() {} }, combat: { stats: { shots: 12, hits: 7, kills: 2 } } };
   const makeItem = (id, cut) => ({ id, cut, t: +cut, o: { object: { userData: { setState: value => states.push([id, value]) } } } });
   const run = {
     clearing: false, queue: [], used: new Map(), relays: [makeItem('stage_1', true), makeItem('stage_2', false), makeItem('optional_1', true)],
@@ -31,6 +32,8 @@ test('checkpoint restores resources, objectives, optional results, and living en
   game.player.pos.x = -1; game.player.health = 0; game.player.alive = false;
   game.weapon.ammo = 0; game.weapon.reserve = 0;
   game.medkits.points[0].remaining = 0;
+  game.ammoBags.points[0].remaining = 0;
+  game.ammoBags.points[0].model.visible = true;
   run.relays[0].cut = false; run.relays[1].cut = true; run.relays[2].cut = false;
   run.cut = 2; run.time = 90; run.queue.push({}); run.clearing = true;
   game.enemies.list[0].hp = 1; game.combat.stats.kills = 10;
@@ -40,6 +43,7 @@ test('checkpoint restores resources, objectives, optional results, and living en
   assert.equal(game.player.yaw, .5); assert.equal(game.player.pitch, .2);
   assert.deepEqual([game.weapon.ammo, game.weapon.reserve], [9, 53]);
   assert.equal(game.medkits.points[0].remaining, 25); assert.equal(game.medkits.points[0].model.visible, false);
+  assert.equal(game.ammoBags.points[0].remaining, 37); assert.equal(game.ammoBags.points[0].model.visible, false);
   assert.deepEqual(run.relays.map(item => item.cut), [true, false, true]);
   assert.equal(run.cut, 1); assert.equal(run.time, 50); assert.equal(run.clearing, false); assert.equal(run.queue.length, 0);
   assert.deepEqual(game.enemies.list.map(enemy => [enemy.type, enemy.hp, ...enemy.pos.toArray()]), [['hound', 48, 12, 0, 4]]);

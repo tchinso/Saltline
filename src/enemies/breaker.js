@@ -4,11 +4,13 @@ import { sM } from './collision.js';
 // A slow, telegraphed bridge weapon. Its exposed upper core takes weak-point damage.
 export function createBreaker(game, variant = 'breaker') {
   const colossus = variant === 'colossus';
+  const hunter = variant === 'hunter';
+  const adaptive = variant === 'adaptive';
   const scale = colossus ? 1.5 : 1;
-  const maxHealth = colossus ? 900 : 620;
+  const maxHealth = colossus ? 900 : adaptive ? 320 : 620;
   const group = new Group();
   group.scale.setScalar(scale);
-  const armor = new MeshStandardMaterial({ color: 0x4b5658, metalness: .65, roughness: .6 });
+  const armor = new MeshStandardMaterial({ color: hunter ? 0x675042 : adaptive ? 0x496a72 : 0x4b5658, metalness: .65, roughness: .6 });
   const dark = new MeshStandardMaterial({ color: 0x20292c, metalness: .7, roughness: .5 });
   const coreMaterial = new MeshStandardMaterial({ color: 0xe88b32, emissive: 0x7f2607, emissiveIntensity: .3 });
   const box = (w, h, d, x, y, z, material) => {
@@ -36,12 +38,28 @@ export function createBreaker(game, variant = 'breaker') {
   const enemy = {
     type: variant, id: 0, pos: group.position, rig: { group }, alive: false, active: false,
     passive: false, mode: 'engage', lastKnown: new Vector3(), hp: maxHealth,
-    phase: 'cooldown', timer: 2.5, followup: false,
-    _activate(pos) { this.pos.copy(pos); this.active = this.alive = true; this.hp = maxHealth; this.phase = 'cooldown'; this.timer = 2.5; this.followup = false; group.visible = true; ring.visible = false; coreMaterial.emissiveIntensity = .3; },
+    phase: 'cooldown', timer: 2.5, followup: false, stun: 0, staggerDamage: 0, shield: 0,
+    _activate(pos) { this.pos.copy(pos); this.active = this.alive = true; this.hp = maxHealth; this.phase = 'cooldown'; this.timer = 2.5; this.followup = false; this.stun = this.staggerDamage = this.shield = 0; armor.color.setHex(hunter ? 0x675042 : adaptive ? 0x496a72 : 0x4b5658); group.visible = true; ring.visible = false; coreMaterial.emissiveIntensity = .3; },
     _deactivate() { this.active = this.alive = false; group.visible = ring.visible = false; },
     damage(amount, point, dir, part) {
       if (!this.alive) return false;
+      if (hunter) {
+        // The hunter is delayed rather than destroyed in this encounter.
+        this.staggerDamage += amount;
+        game.events.emit('enemy:hit', { enemy: this, point, part: part || 'body' });
+        if (this.staggerDamage >= 130) {
+          this.staggerDamage = 0; this.stun = 2.5; this.phase = 'cooldown'; this.timer = 2;
+          ring.visible = false; coreMaterial.emissiveIntensity = .3;
+          game.hud?.warn?.('헌터가 잠시 멈췄다 — 철수 준비를 계속하라', 2);
+        }
+        return false;
+      }
+      if (adaptive && this.shield > 0) amount *= .25;
       this.hp -= amount;
+      if (adaptive && this.shield <= 0 && (this.staggerDamage += amount) >= 130) {
+        this.staggerDamage = 0; this.shield = 2.5; armor.color.setHex(0x85dce0);
+        game.hud?.warn?.('신형 기계가 장갑을 전개했다 — 엄폐하고 기회를 기다려라', 2.5);
+      }
       game.events.emit('enemy:hit', { enemy: this, point, part: part || 'body' });
       if (this.hp > 0) return false;
       this.alive = false; ring.visible = false; group.visible = false;
@@ -59,13 +77,28 @@ export function createBreaker(game, variant = 'breaker') {
     },
     _update(dt) {
       if (!this.alive || !game.player || game.player.alive === false) return;
+      if (adaptive && this.shield > 0) {
+        this.shield = Math.max(0, this.shield - dt);
+        if (this.shield === 0) armor.color.setHex(0x496a72);
+      }
+      if (hunter && this.stun > 0) { this.stun = Math.max(0, this.stun - dt); return; }
+      if ((hunter || adaptive) && this.phase === 'cooldown') {
+        direction.copy(game.player.pos).sub(this.pos); direction.y = 0;
+        const distance = direction.length();
+        if (distance > 9) {
+          direction.normalize();
+          const x = this.pos.x + direction.x * dt * 1.15;
+          const z = this.pos.z + direction.z * dt * 1.15;
+          if (game.physics.nav?.isWalkable(x, z)) { this.pos.x = x; this.pos.z = z; }
+        }
+      }
       this.timer -= dt;
       if (this.phase === 'cooldown' && this.timer <= 0) {
         target.copy(game.player.pos); target.y += 1;
         ring.position.set(target.x, .025, target.z); ring.visible = true;
         turret.rotation.y = Math.atan2(target.x - this.pos.x, target.z - this.pos.z);
         this.phase = 'aim'; this.timer = 1.6; coreMaterial.emissiveIntensity = 2;
-        game.hud?.warn?.(`${colossus ? '콜로서스' : '브레이커'} 조준 중 — 엄폐하거나 이동하라`, 1.6);
+        game.hud?.warn?.(`${hunter ? '헌터' : adaptive ? '신형 기계' : colossus ? '콜로서스' : '브레이커'} 조준 중 — 엄폐하거나 이동하라`, 1.6);
       } else if (this.phase === 'aim' && this.timer <= 0) {
         muzzle.copy(this.pos).y += 1.9 * scale;
         direction.copy(target).sub(muzzle).normalize();

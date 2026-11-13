@@ -72,3 +72,33 @@ test('colossus has a distinct larger weak point, telegraph and faster damaged ph
   game.enemies.clear();
   assert.equal(game.enemies.spawn('colossus', new Vector3()).hp, 900);
 });
+
+test('hunter advances, can be delayed by gunfire, and survives overwhelming damage', async () => {
+  const { game, killed } = await makeGame();
+  game.physics.nav = { isWalkable: () => true };
+  const boss = game.enemies.spawn('hunter', new Vector3(10, 0, 0));
+  for (let i = 0; i < 20; i++) game.enemies.update(.05);
+  assert.ok(boss.pos.x < 10, 'hunter advances during cooldown');
+  assert.equal(boss.damage(1000, boss.pos, null, 'body'), false);
+  assert.equal(boss.alive, true);
+  assert.equal(killed.length, 0);
+  const pausedPosition = boss.pos.x;
+  for (let i = 0; i < 20; i++) game.enemies.update(.05);
+  assert.equal(boss.pos.x, pausedPosition, 'shots temporarily stop the hunter');
+  for (let i = 0; i < 36; i++) game.enemies.update(.05);
+  assert.ok(boss.pos.x < pausedPosition, 'hunter resumes pursuit');
+  game.enemies.clear();
+  assert.equal(game.enemies.spawn('hunter', new Vector3()).stun, 0, 'retry clears stun');
+});
+
+test('adaptive machine temporarily deploys armor after sustained damage', async () => {
+  const { game } = await makeGame();
+  const enemy = game.enemies.spawn('adaptive', new Vector3());
+  enemy.damage(130, enemy.pos, null, 'body');
+  assert.equal(enemy.shield, 2.5);
+  enemy.damage(100, enemy.pos, null, 'body');
+  assert.equal(enemy.hp, 165, 'armor reduces damage while deployed');
+  for (let i = 0; i < 51; i++) game.enemies.update(.05);
+  assert.equal(enemy.shield, 0);
+  assert.equal(enemy.damage(200, enemy.pos, null, 'body'), true);
+});

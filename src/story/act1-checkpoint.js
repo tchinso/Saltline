@@ -9,6 +9,7 @@ export function captureAct1Checkpoint(game, run) {
     player: { pos: player.pos.toArray(), yaw: player.yaw, pitch: player.pitch, health: player.health },
     weapon: { ammo: game.weapon.ammo, reserve: game.weapon.reserve },
     medkits: (game.medkits?.points || []).map(point => point.remaining),
+    ammoBags: (game.ammoBags?.points || []).map(point => point.remaining),
     enemies: (game.enemies.list || []).filter(enemy => enemy.alive).map(enemy => ({
       type: enemy.type, pos: enemy.pos.toArray(), hp: enemy.hp,
       state: enemy.mode === 'patrol' ? 'patrol' : 'alert'
@@ -35,6 +36,10 @@ export function restoreAct1Checkpoint(game, run, checkpoint) {
   game.weapon.reserve = saved.weapon.reserve;
   for (const [index, point] of (game.medkits?.points || []).entries()) {
     point.remaining = saved.medkits[index] ?? 0;
+    point.model.visible = point.remaining <= 0;
+  }
+  for (const [index, point] of (game.ammoBags?.points || []).entries()) {
+    point.remaining = saved.ammoBags?.[index] ?? 0;
     point.model.visible = point.remaining <= 0;
   }
   Object.assign(run, saved.run);

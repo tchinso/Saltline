@@ -67,6 +67,24 @@ function addScenery(b, kind) {
     for (const x of [2, 24]) b.box('steel_galv', .3, 6.2, .3, x, 3.1, -12.4);
     b.box('steel_galv', 22.4, .3, .3, 13, 6.1, -12.4);
     for (const x of [-30, -24, -18, -12, -6]) b.box('paint_white', 2.8, .015, .08, x, .02, 2.8);
+    // Training stations stand close to the start, with painted firing lanes
+    // and shootable target boards outside the route to the first objective.
+    b.box('paint_orange', .16, .025, 14, -29, .035, 1);
+    for (const z of [-5, -1, 3, 7]) {
+      b.box('paint_white', 12, .02, .09, -22, .035, z);
+      b.box('paint_white', .55, .025, .35, -29.1, .04, z + 1);
+    }
+    for (const [x, z] of [[-23, -4], [-20, 7]]) {
+      b.box('steel_dark', .12, 1.25, .12, x, .65, z);
+      b.box('steel_dark', .12, 1.05, 1.05, x, 1.5, z);
+      b.cyl('paint_white', .39, .035, x - .08, 1.5, z, { axis: 'x', seg: 20 });
+      b.cyl('paint_red', .2, .045, x - .11, 1.5, z, { axis: 'x', seg: 20 });
+      b.col(x - .08, 1, z - .525, x + .08, 2.05, z + .525, 'metal', { noNav: true });
+    }
+    // A range sign faces approaching players; it is outside the combat lane.
+    b.box('steel_dark', .12, 1.7, .12, -28, .85, 6);
+    b.box('steel_dark', .14, .9, 2.7, -28, 1.9, 6);
+    b.label('TRAINING RANGE', .32, -28.08, 1.9, 6, 'x-', { color: 'white', distress: .1 });
   } else if (kind === 'command') {
     // Radio aerials and a checkpoint arch distinguish the command post.
     for (const x of [-18, 10]) {
@@ -114,12 +132,18 @@ function addScenery(b, kind) {
   }
 }
 function construct(b, kind) {
-  // Boundary walls and alternating cover leave a clear route down the center.
+  // Boundaries enclose each mission; interior walls below define different routes.
   for (const z of [-20, 20]) addBlock(b, 0, z, 77, .5, 3, 'concrete');
   for (const x of [-39, 39]) addBlock(b, x, 0, .5, 40, 3, 'concrete');
-  const covers = kind === 'bridge'
-    ? [[-22,-4],[-14,4],[-5,-4],[4,4],[13,-4],[22,4]]
-    : [[-24,-5],[-16,5],[-7,-5],[2,5],[11,-5],[20,5]];
+  const coverLayouts = {
+    base: [[-27,-5],[-19,5],[-12,-6],[-5,5],[13,-5],[21,2]],
+    command: [[-29,5],[-20,-7],[-9,4],[1,-6],[14,-5],[23,-4]],
+    city: [[-27,-7],[-17,5],[-8,-7],[2,6],[14,-5],[23,-5]],
+    ruins: [[-29,-6],[-21,6],[-12,-6],[-3,6],[8,6],[21,-5]],
+    hospital: [[-28,5],[-19,-5],[-10,5],[-1,-5],[12,6],[21,5]],
+    bridge: [[-24,-5],[-16,5],[-8,-5],[2,6],[14,-5],[23,-5]]
+  };
+  const covers = coverLayouts[kind];
   covers.forEach(([x,z], i) => b.place(i % 2 ? 'sandbags' : 'jersey_barrier', x, z, i % 2 ? .2 : 0, { seed: 30 + i }));
   if (kind === 'base' || kind === 'command') {
     for (const x of [-27, -12, 4, 20]) {
@@ -131,9 +155,23 @@ function construct(b, kind) {
       for (const z of [-11, -8, -5]) { b.box('steel_dark', .1, 1.7, .1, -14, .85, z); b.box('paint_orange', .18, .75, .65, -14, 1.35, z); }
       addBlock(b, 13, -13, 24, .5, 5, 'steel_dark');
       addBlock(b, 25, -10, .5, 6, 5, 'steel_dark');
+      // Outdoor range lanes lead into an open-sided hangar with two entrances.
+      addBlock(b, -19, -10, 19, .45, 1.2, 'concrete');
+      addBlock(b, -21, 10, 15, .45, 1.2, 'concrete');
+      // Tall hangar facade and a central vehicle door frame the transition
+      // from the broad training ground into a more enclosed rescue space.
+      addBlock(b, 2, -10, .5, 6, 5, 'steel_dark');
+      addBlock(b, 2, 4, .5, 6, 5, 'steel_dark');
+      addBlock(b, 7, 7, 8, .5, 4, 'steel_dark');
+      addBlock(b, 21, 7, 7, .5, 4, 'steel_dark');
     } else {
       for (const x of [-18, -4, 10, 24]) addBlock(b, x, -11, 8, .6, 4, 'concrete');
       b.place('guard_booth', 27, 11, 0, { seed: 91 });
+      // Offset partitions form rooms and cross-passages before the gate yard.
+      addBlock(b, -17, -1, .5, 12, 3.5);
+      addBlock(b, -10, 8, 12, .5, 3.5);
+      addBlock(b, -3, -5, .5, 10, 3.5);
+      addBlock(b, 3, 7, 9, .5, 3.5);
     }
   } else if (kind === 'city' || kind === 'ruins') {
     for (const x of [-28, -12, 5, 22]) {
@@ -141,13 +179,33 @@ function construct(b, kind) {
       addBlock(b, x + 4, 16, 9, 5, kind === 'ruins' ? 4 : 8, 'concrete');
       b.place('dumpster', x + 3, 10, 0, { seed: x + 50 });
     }
-    if (kind === 'ruins') for (const x of [-20, 0, 18]) b.place('crate_stack', x, -9, .2, { seed: x + 55 });
+    if (kind === 'ruins') {
+      for (const x of [-20, 0, 18]) b.place('crate_stack', x, -9, .2, { seed: x + 55 });
+      // Collapsed masonry blocks the central route and creates a retreat zigzag.
+      addBlock(b, -18, -3, 2, 10, 2.5);
+      addBlock(b, -1, 3, 2.5, 11, 2.7);
+      addBlock(b, 15, -3, 2.5, 11, 2.4);
+      addBlock(b, -10, 11, 11, .7, 3);
+    } else {
+      // A blocked intersection opens onto a wider police/evacuation square.
+      addBlock(b, -16, -4, 1, 12, 1.5);
+      addBlock(b, -4, -10, 12, .7, 3.5);
+      addBlock(b, 2, 11, 13, .7, 3.5);
+      parkedVehicle(b, -27, -9, 'paint_white');
+    }
   } else if (kind === 'hospital') {
     for (const z of [-13, 13]) for (const x of [-22, -7, 8, 23]) addBlock(b, x, z, 10, .5, 4, 'concrete');
     for (const x of [-14, 1, 16]) { b.place('shelf_rack', x, 9, 0, { seed: x + 44 }); b.place('ibc_tote', x, -9, 0, { seed: x + 48 }); }
     // A red cross on the hospital wall, visible from the approach.
     b.box('paint_red', .2, 2.4, .45, -27, 2.6, -12.65);
     b.box('paint_red', .2, .45, 2.4, -27, 2.6, -12.65);
+    // A main corridor with recessed wards and door gaps; the evacuation lane
+    // from stage 3 to stage 4 stays clear for the moving patient vehicle.
+    for (const z of [-7.5, 7.5]) for (const x of [-27, -14, -1, 12, 25]) addBlock(b, x, z, 8, .45, 3.4);
+    for (const x of [-20, -7, 6, 19]) {
+      addBlock(b, x, -11, .45, 7, 3.4);
+      addBlock(b, x, 11, .45, 7, 3.4);
+    }
   } else {
     // Distinct bridge deck, rails, lamps and a gate at each end.
     for (const z of [-11, 11]) {
@@ -156,6 +214,8 @@ function construct(b, kind) {
     }
     b.place('guard_booth', -27, 15, 0, { seed: 101 });
     b.place('gate_arm', -25, 8, 0, { seed: 102 });
+    // Short median sections divide the first defense line into two lanes.
+    for (const x of [-27, -18, -9, 0]) addBlock(b, x, 0, 5, .55, 1.15);
   }
   addScenery(b, kind);
   return covers;
@@ -167,28 +227,39 @@ async function createLevel(game, spec) {
   const covers = construct(b, spec.kind);
   root.add(b.staticRoot, b.dynRoot);
   const routes = {
-    base: [[-22, 0], [-10, -3], [8, -3], [24, -6], [0, 8], [10, -8]],
-    command: [[-24, -3], [-8, -3], [9, 3], [25, 5], [0, 8]],
-    city: [[-22, 2], [-7, -3], [8, 3], [26, 0], [0, 8]],
-    ruins: [[-25, 1], [-9, 4], [9, -3], [25, 3], [0, 8]],
-    hospital: [[-24, 0], [-8, -3], [7, 3], [24, 0], [0, 7]],
-    bridge: [[-24, 0], [-8, -2], [9, 2], [26, 0], [0, 8]]
+    base: [[-22, 2], [-10, 9], [8, -3], [24, -6], [0, 8], [10, -8]],
+    command: [[-24, -5], [-8, 5], [9, 3], [25, 5], [0, 10]],
+    city: [[-22, 4], [-7, -4], [8, 3], [26, 0], [0, 8]],
+    ruins: [[-25, 1], [-9, 7], [9, -4], [25, 8], [2, 9]],
+    hospital: [[-24, 0], [-11, -10], [7, 3], [24, 0], [0, 11]],
+    bridge: [[-24, -3], [-8, 3], [9, 2], [26, 0], [0, 8]]
   };
+  const starts = { base: [-33, 2], command: [-33, -9], city: [-33, -5], ruins: [-33, 9], hospital: [-33, -6], bridge: [-33, -3] };
+  const exits = { base: [32, -4], command: [32, 8], city: [32, 5], ruins: [32, 9], hospital: [31, -3], bridge: [31, 0] };
   const positions = routes[spec.kind].map(([x, z]) => v(x, z));
   const objectives = spec.labels.map((label, i) => ({
     id: i < 4 ? `stage_${i + 1}` : `optional_${i - 3}`,
     label, pos: positions[i].clone(), object: marker(b.dynRoot, positions[i], i, spec.kind)
   }));
   const enemySpawns = [];
+  function walkableSpawn(x, z) {
+    if (game.physics.nav.isWalkable(x, z)) return v(x, z);
+    for (const radius of [1, 2, 3, 4, 5]) for (let i = 0; i < 16; i++) {
+      const sx = x + Math.cos(i * Math.PI / 8) * radius;
+      const sz = z + Math.sin(i * Math.PI / 8) * radius;
+      if (game.physics.nav.isWalkable(sx, sz)) return v(sx, sz);
+    }
+    throw new Error(`No walkable spawn near ${x}, ${z} in ${spec.id}`);
+  }
   for (const x of [-25, -13, -1, 11, 25, 32]) for (const z of [-7, 7]) {
     const groundZ = spec.kind === 'base' && x === 25 && z === -7 ? -3
       : spec.kind === 'bridge' && x === -25 && z === 7 ? 3 : z;
-    enemySpawns.push({ type: 'ground', zone: 'field', pos: v(x, groundZ) });
+    enemySpawns.push({ type: 'ground', zone: 'field', pos: walkableSpawn(x, groundZ) });
     enemySpawns.push({ type: 'air', zone: 'field', pos: v(x, z, 7 + ((x + z + 50) % 3)) });
   }
   return {
-    root, playerStart: { pos: v(-33, 0), yaw: -Math.PI / 2 }, objectives,
-    extraction: { pos: v(31, 0), radius: 2.5 }, enemySpawns,
+    root, playerStart: { pos: v(...starts[spec.kind]), yaw: -Math.PI / 2 }, objectives,
+    extraction: { pos: v(...exits[spec.kind]), radius: 2.5 }, enemySpawns,
     zones: [{ name: 'field', min: [-39, -20], max: [39, 20] }],
     coverPoints: covers.map(([x,z]) => v(x, z + (z < 0 ? 1.5 : -1.5))),
     interiorBoxes: [], skylights: [], shedLights: [],

@@ -107,7 +107,7 @@ kbd { display: inline-block; font: 500 10px/1 var(--f-mono); color: var(--bone);
 .toggle[aria-pressed="true"] i { border-color: var(--signal); } .toggle[aria-pressed="true"] i::after { transform: translateX(20px); background: var(--signal); }
 
 /* ---- intro location card ---- */
-.loc-card { position: absolute; left: max(var(--gl), 5.5vw); bottom: calc(28vh + var(--sab)); padding-left: 16px; opacity: 0; transition: opacity .5s; text-shadow: var(--shadow); max-width: calc(100vw - var(--gl) - var(--gr) - 16px); }
+.loc-card { position: absolute; left: max(var(--gl), 5.5vw); bottom: calc(28vh + var(--sab)); padding-left: 16px; opacity: 0; pointer-events: none; transition: opacity .5s; text-shadow: var(--shadow); max-width: calc(100vw - var(--gl) - var(--gr) - 16px); }
 .loc-card i { position: absolute; left: 0; top: 2px; bottom: 2px; width: 3px; background: var(--signal); }
 .loc-card b { display: block; font: 700 clamp(19px, 3vw, 34px)/1.05 var(--f-display); letter-spacing: .16em; text-transform: uppercase; }
 .loc-card span { display: block; margin-top: 7px; font: 400 11px/1.4 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--bone-dim); }

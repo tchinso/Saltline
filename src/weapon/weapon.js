@@ -298,6 +298,7 @@ async function createWeapon(game) {
     ammo: Gv,
     magSize: Gv,
     reserve: B_,
+    maxReserve: B_,
     state: "idle",
     ads: 0,
     spread: .0125,
@@ -318,6 +319,18 @@ async function createWeapon(game) {
     reloadNow: Fe,
     addAmmo(Me) {
       ve.reserve += Me;
+    },
+    refillAmmo() {
+      const before = ve.ammo + ve.reserve;
+      ve.ammo = ve.magSize;
+      // Mission rewards may put reserve above the normal capacity; never discard them.
+      ve.reserve = Math.max(ve.reserve, ve.maxReserve);
+      k.autoReload = -1;
+      if (!k.reload) {
+        k.boltLocked = false;
+        d.visible = true;
+      }
+      return ve.ammo + ve.reserve - before;
     },
     setWetness(Me) {
       Wv.value = Math.max(0, Math.min(1, +Me || 0));

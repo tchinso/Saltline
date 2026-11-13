@@ -19,6 +19,11 @@ test('ACT 1 objectives, extraction, and ground spawns have connected walkable po
     game.physics.build();
     const walkable = position => game.physics.nav.isWalkable(position.x, position.z);
     assert.ok(walkable(level.playerStart.pos), `${map.id} player start`);
+    if (map.id === 'm01_base') {
+      const targetHit = game.physics.raycast(new THREE.Vector3(-25, 1.5, -4), new THREE.Vector3(1, 0, 0), 4);
+      assert.equal(targetHit?.surface, 'metal', 'nearby training target stops shots');
+      assert.ok(targetHit.box.noNav, 'target board leaves the ground navigation route open');
+    }
     for (const objective of level.objectives) {
       assert.ok(walkable(objective.pos), `${map.id} ${objective.id}`);
       assert.ok(game.physics.nav.findPath(level.playerStart.pos, objective.pos), `${map.id} path to ${objective.id}`);
@@ -35,6 +40,21 @@ test('ACT 1 objectives, extraction, and ground spawns have connected walkable po
     }
     for (const spawn of level.enemySpawns.filter(item => item.type === 'ground')) {
       assert.ok(walkable(spawn.pos), `${map.id} spawn ${spawn.pos.x},${spawn.pos.z}`);
+    }
+    if (['m02_command', 'm03_city', 'm05_hospital', 'm06_bridge'].includes(map.id)) {
+      const from = level.objectives.find(o => o.id === 'stage_3').pos;
+      const to = level.objectives.find(o => o.id === 'stage_4').pos;
+      const dx = to.x - from.x, dz = to.z - from.z;
+      const distance = Math.hypot(dx, dz);
+      const steps = Math.ceil((distance + 2.8) * 2);
+      for (let i = 0; i <= steps; i++) {
+        const t = (-1.4 + (distance + 2.8) * i / steps) / distance;
+        for (const side of [-.8, 0, .8]) {
+          const x = from.x + dx * t - dz / distance * side;
+          const z = from.z + dz * t + dx / distance * side;
+          assert.ok(game.physics.nav.isWalkable(x, z), `${map.id} escort lane ${x.toFixed(1)},${z.toFixed(1)}`);
+        }
+      }
     }
   }
 });

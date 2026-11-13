@@ -25,11 +25,34 @@ test('ACT 2 objectives, extraction, and ground spawns have connected walkable po
     }
     assert.ok(walkable(level.extraction.pos), `${map.id} extraction`);
     assert.ok(game.physics.nav.findPath(level.playerStart.pos, level.extraction.pos), `${map.id} path to extraction`);
+    const escortFrom = map.id === 'm07_lab' ? 'stage_2' : ['m09_front','m11_zone','m12_station'].includes(map.id) ? 'stage_3' : null;
+    const escortTo = map.id === 'm07_lab' ? 'stage_3' : 'stage_4';
+    if (escortFrom) {
+      const start = level.objectives.find(o => o.id === escortFrom).pos;
+      const end = level.objectives.find(o => o.id === escortTo).pos;
+      assert.ok(game.physics.nav.clearLine(start, end), `${map.id} escort path must be unobstructed`);
+      for (let step = 0; step <= 40; step++) {
+        const point = start.clone().lerp(end, step / 40);
+        assert.ok(walkable(point), `${map.id} escort route at ${step}/40`);
+      }
+    }
+    if (map.id === 'm13_city') {
+      const boss = new THREE.Vector3(24, 0, -7);
+      const target = level.objectives.find(o => o.id === 'stage_3').pos;
+      assert.ok(walkable(boss), 'M13 colossus spawn');
+      assert.ok(game.physics.lineOfSight(boss.clone().setY(2), target.clone().setY(1.6)), 'M13 colossus and player have a clear line of fire');
+    }
     assert.ok(level.medkitSites.length >= 10, 'medkit count');
     for (const site of level.medkitSites) {
       const point = new THREE.Vector3(...site);
       assert.ok(walkable(point), 'medkit');
       assert.ok(game.physics.nav.findPath(level.playerStart.pos, point), 'medkit path');
+    }
+    assert.ok(level.ammoSites.length >= 8, `${map.id} ammo supply count`);
+    for (const site of level.ammoSites) {
+      const point = new THREE.Vector3(...site);
+      assert.ok(walkable(point), `${map.id} ammo supply position`);
+      assert.ok(game.physics.nav.findPath(level.playerStart.pos, point), `${map.id} ammo supply path`);
     }
     if (map.id === 'm07_lab') {
       const prior = globalThis.localStorage;
