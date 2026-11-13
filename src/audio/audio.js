@@ -66,6 +66,8 @@ async function createAudio(game) {
 function createAudioMixer(i, e, t) {
   let n = i.events;
   const campaignMusic = !t && i.mood?.music || null;
+  // The old harbor weather is not a soundscape for every campaign location.
+  const campaignAmbience = !i.showcase && /^m(?:0[1-9]|1[0-9]|2[0-6])$/.test(i.story?.id || '');
   let s = Math.random;
   let o = () => t ? true : e.state === "running";
   let r = t ? t.bufs : new Map();
@@ -495,11 +497,11 @@ function createAudioMixer(i, e, t) {
     Go[te].music && Me();
   }
   let Oe = {
-    rain: Be("rain", {
+    rain: campaignAmbience ? Ie : Be("rain", {
       gain: 0,
       fade: 2
     }),
-    rainIn: Be("rain_interior", {
+    rainIn: campaignAmbience ? Ie : Be("rain_interior", {
       gain: 0,
       fade: 2
     }),
@@ -507,7 +509,7 @@ function createAudioMixer(i, e, t) {
       gain: 0,
       fade: 2
     }),
-    sea: Be("sea", {
+    sea: campaignAmbience ? Ie : Be("sea", {
       gain: 0,
       pos: [33, -1, 0],
       fade: 2,
@@ -1030,11 +1032,11 @@ function createAudioMixer(i, e, t) {
     pt += (ut - pt) * ye(.5);
     Oe.rain.setGain(fe * (1 - .93 * P) * .95);
     Oe.rainIn.setGain(fe * P * .95);
-    Oe.wind.setGain(fe * (.3 + .7 * pt) * (1 - .65 * P) * .75);
+    Oe.wind.setGain(fe * (.3 + .7 * pt) * (1 - .65 * P) * (campaignAmbience ? .03 : .75));
     Oe.wind.setPitch(.9 + .25 * pt);
     Oe.sea.setGain(fe * (1 - .5 * P) * 1);
     Oe.sea.setPos([33, -1, pi(re.z, -28, 26)]);
-    !ue && (ke || ee === "title" || ee === "complete") && Os(te, ee === "title" ? .7 : 1);
+    !campaignAmbience && !ue && (ke || ee === "title" || ee === "complete") && Os(te, ee === "title" ? .7 : 1);
     ue || zo(te);
     Y = Math.max(0, Y - te * (pn.size ? .045 : .14));
     let ct = ke || ue ? Math.max(V, Re.autoIntensity ? Math.max(.15, Y) : 0) : 0;
@@ -1303,6 +1305,13 @@ function createAudioMixer(i, e, t) {
         tracked: pn.size,
         music: episodeScore ? episodeScore.debug().active : Xe.on,
         episodeScore: episodeScore?.debug() || null,
+        ambience: {
+          rain: Oe.rain.gT || 0,
+          rainInterior: Oe.rainIn.gT || 0,
+          wind: Oe.wind.gT || 0,
+          sea: Oe.sea.gT || 0,
+          harborEvents: !campaignAmbience
+        },
         intensity: +L.toFixed(2),
         interior: +P.toFixed(2),
         gameState: ee,

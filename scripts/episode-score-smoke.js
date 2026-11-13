@@ -51,16 +51,31 @@ try {
   console.log(`Episode score passed: audible RMS ${result.rms.toFixed(4)}, peak ${result.peak.toFixed(4)}, bounded pause/resume.`);
 
   await page.unroute('**/game.js');
-  await page.goto(`${process.env.GAME_URL || 'http://127.0.0.1:4173/'}?story=m01&q=test`);
-  await page.waitForFunction(() => window.__ready || window.__fatal, null, { timeout: 180000 });
-  assert.equal(await page.evaluate(() => window.__fatal), null);
-  await page.locator('[data-s="title"] [data-act="deploy"]').click();
-  await page.waitForFunction(() => window.__G?.audio?.debug?.().episodeScore?.scheduled > 0, null, { timeout: 30000 });
-  const inGame = await page.evaluate(() => ({ score: window.__G.audio.debug().episodeScore, errors: window.__errors }));
-  assert.equal(inGame.score.bpm, 96, 'selected episode music profile reaches the mixer');
-  assert.equal(inGame.score.mode, 'major');
-  assert.deepEqual(inGame.errors, []);
-  console.log('Episode score passed: selected profile is running in the game audio mixer.');
+  await page.addInitScript(() => localStorage.setItem('saltline.developer-mode.v1', 'enabled'));
+  for (const [id, bpm, mode] of [['m01', 96, 'major'], ['m07', 88, 'dorian']]) {
+    await page.goto(`${process.env.GAME_URL || 'http://127.0.0.1:4173/'}?story=${id}&q=test`);
+    await page.waitForFunction(() => window.__ready || window.__fatal, null, { timeout: 180000 });
+    assert.equal(await page.evaluate(() => window.__fatal), null, id);
+    await page.locator('[data-s="title"] [data-act="deploy"]').click();
+    await page.evaluate(() => window.__G.game.start({ skipIntro: true }));
+    await page.waitForFunction(() => window.__G?.game?.state === 'playing' &&
+      window.__G?.audio?.debug?.().episodeScore?.scheduled > 0, null, { timeout: 30000 });
+    const inGame = await page.evaluate(() => ({ id: window.__G.story.id, audio: window.__G.audio.debug(), errors: window.__errors }));
+    assert.equal(inGame.id, id);
+    assert.equal(inGame.audio.state, 'running', `${id} WebAudio is running`);
+    assert.equal(inGame.audio.episodeScore.active, true, `${id} episode score is playing`);
+    assert.equal(inGame.audio.episodeScore.bpm, bpm, `${id} music profile reaches the mixer`);
+    assert.equal(inGame.audio.episodeScore.mode, mode);
+    const ambience = inGame.audio.ambience;
+    assert.ok(ambience, `${id} exposes ambience mix levels`);
+    assert.equal(ambience.rain, 0, `${id} rain loop is muted`);
+    assert.equal(ambience.rainInterior, 0, `${id} indoor rain loop is muted`);
+    assert.equal(ambience.sea, 0, `${id} harbor sea loop is muted`);
+    assert.ok(Number.isFinite(ambience.wind) && ambience.wind >= 0 && ambience.wind <= .03, `${id} wind remains subtle`);
+    assert.equal(ambience.harborEvents, false, `${id} harbor events are disabled`);
+    assert.deepEqual(inGame.errors, []);
+    console.log(`${id} passed: episode score is active and the background mix is restrained.`);
+  }
 } finally {
   await browser.close();
 }
