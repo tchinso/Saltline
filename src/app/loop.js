@@ -42,7 +42,7 @@ export function startGameLoop(game, {
       } catch (v) {
         updateSystem.err.sc || (updateSystem.err.sc = 1, console.error("[loop] showcase update threw: " + (v && v.stack || v)));
       }
-    } else d && (updateSystem("player", p), updateSystem("weapon", p), updateSystem("enemies", p));
+    } else d && (updateSystem("player", p), updateSystem("medkits", p), updateSystem("weapon", p), updateSystem("enemies", p));
     if (game.weapon && game.weapon.setWetness && game.level && game.level.interiorBoxes && game.level.interiorBoxes[0]) {
       let v = game.level.interiorBoxes[0];
       let g = game.camera.position;

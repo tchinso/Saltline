@@ -1,5 +1,6 @@
 import { GULL_TUNING, createGull } from './gull.js';
 import { HOUND_TUNING, createHound } from './hound.js';
+import { createBreaker } from './breaker.js';
 import { AdditiveBlending, Color, CylinderGeometry, DoubleSide, DynamicDrawUsage, Group, InstancedMesh, Matrix4, MeshBasicMaterial, Quaternion, ShaderMaterial, Vector3 } from '../../vendor/three.js';
 import { createRandom } from '../core/random.js';
 import { mergeGeometries } from '../geometry/merge.js';
@@ -207,6 +208,8 @@ async function createEnemies(game) {
     v.push(D);
     s.add(D.rig.group);
   }
+  const breakers = [createBreaker(game)];
+  for (const breaker of breakers) s.add(breaker.rig.group);
   let g = [];
   for (let T = 0; T < ENEMY_TUNING.maxBolts; T++) g.push({
     on: false,
@@ -325,7 +328,7 @@ async function createEnemies(game) {
     list: t,
     TUNE: ENEMY_TUNING,
     spawn(T, D, C = {}) {
-      let G = T === "gull" ? d : T === "hound" ? v : null;
+      let G = T === "gull" ? d : T === "hound" ? v : T === "breaker" ? breakers : null;
       if (!G) return null;
       let j = null;
       for (let N of G) if (!N.active) {
@@ -347,10 +350,11 @@ async function createEnemies(game) {
         let N = t[j];
         if (!N.alive) continue;
         let Q = N.pos.x - T.x;
-        let K = N.pos.y + (N.type === "hound" ? .6 : 0) - T.y;
+        let K = N.pos.y + (N.type === "breaker" ? 1.3 : N.type === "hound" ? .6 : 0) - T.y;
         let ie = N.pos.z - T.z;
         let F = Q * D.x + K * D.y + ie * D.z;
-        F < -1.5 || F > C + 1.5 || Q * Q + K * K + ie * ie - F * F > 1.7 || (G || (G = {
+        let radiusSq = N.type === "breaker" ? 6 : 1.7;
+        F < -1.5 || F > C + 1.5 || Q * Q + K * K + ie * ie - F * F > radiusSq || (G || (G = {
           dist: 1 / 0,
           point: new Vector3(),
           normal: new Vector3(),
@@ -368,6 +372,7 @@ async function createEnemies(game) {
     clear() {
       for (let T of d) T.active && T._deactivate();
       for (let T of v) T.active && T._deactivate();
+      for (let T of breakers) T.active && T._deactivate();
       t.length = 0;
       n.length = 0;
       h.tokens = 0;

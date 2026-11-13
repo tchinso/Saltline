@@ -1,6 +1,8 @@
 /* =====================================================================  HUD  */
 .hud { position: absolute; inset: 0; opacity: 0; transition: opacity .35s ease; pointer-events: none; color: var(--bone); text-shadow: var(--shadow); }
 .hud.on { opacity: 1; }
+.escort-status { position: absolute; top: calc(105px + var(--sat)); left: var(--gl); max-width: min(360px, 72vw); padding: 7px 10px; background: rgba(11, 13, 15, .8); border-left: 2px solid var(--signal); font: 600 14px/1.4 var(--f-label); }
+.escort-status[hidden] { display: none; }
 .h-k { font: 600 11px/1 var(--f-label); letter-spacing: .26em; text-transform: uppercase; color: rgba(232, 228, 218, .72); }
 
 /* compass */

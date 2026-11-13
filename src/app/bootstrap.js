@@ -18,6 +18,7 @@ import { createMesh } from '../geometry/primitives.js';
 import { createCombat } from '../combat/combat.js';
 import { createAudio } from '../audio/audio.js';
 import { createPlayer } from '../player/player.js';
+import { createMedkits } from '../player/medkits.js';
 import { createWeapon } from '../weapon/weapon.js';
 import { createEnemies } from '../enemies/enemies.js';
 import { createHud } from '../ui/hud.js';
@@ -186,6 +187,7 @@ async function boot() {
     await loadSystem("fx", "fx", () => createEffects(game));
     await loadSystem("audio", "audio", () => params.noaudio ? fallbacks.audio() : createAudio(game));
     game.player = createPlayer(game);
+    game.medkits = createMedkits(game);
     game.combat = createCombat(game);
     await setBootProgress("소총 점검 중", .74);
     await loadSystem("weapon", "weapon", () => createWeapon(game));

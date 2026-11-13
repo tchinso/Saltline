@@ -1,5 +1,8 @@
 import { Vector3 } from '../../vendor/three.js';
 import { clamp } from '../core/math.js';
+const callOptional = (target, method, ...args) => {
+  if (target && typeof target[method] === "function") return target[method](...args);
+};
 const COMPASS_DIRECTIONS = ['북쪽', '북동쪽', '동쪽', '남동쪽', '남쪽', '남서쪽', '서쪽', '북서쪽'];
 export function createEncounters(game, level, player, hud, run, MISSION_TUNING) {
   const scratchPosition = new Vector3();

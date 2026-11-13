@@ -6,7 +6,7 @@ var $C = `
     <div><dt>사격</dt><dd>마우스 왼쪽 버튼</dd></div>
     <div><dt>조준</dt><dd>마우스 오른쪽 버튼</dd></div>
     <div><dt>재장전</dt><dd><kbd>R</kbd></dd></div>
-    <div><dt>중계기 차단</dt><dd><kbd>E</kbd> 길게 누르기</dd></div>
+    <div><dt>상호작용</dt><dd><kbd>E</kbd> 길게 누르기</dd></div>
     <div><dt>점프</dt><dd><kbd>Space</kbd></dd></div>
     <div><dt>달리기</dt><dd><kbd>Shift</kbd></dd></div>
     <div><dt>앉기</dt><dd><kbd>C</kbd> 또는 <kbd>Ctrl</kbd></dd></div>
@@ -21,7 +21,7 @@ var ZC = `
     <div><dt>조준</dt><dd>조준 버튼으로 켜기·끄기</dd></div>
     <div><dt>재장전</dt><dd>재장전 버튼</dd></div>
     <div><dt>점프</dt><dd>점프 버튼</dd></div>
-    <div><dt>중계기 차단</dt><dd>중계기 앞에서 사용 버튼 길게 누르기</dd></div>
+    <div><dt>상호작용</dt><dd>목표물 앞에서 사용 버튼 길게 누르기</dd></div>
     <div><dt>달리기</dt><dd>이동 스틱을 앞쪽 끝까지 밀기</dd></div>
   </dl>`;
 export const menuTemplate = `
@@ -42,7 +42,7 @@ export const menuTemplate = `
       </div>
       <aside class="m-legend" aria-label="조작법 요약">
         <div><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동</span><span><kbd>마우스</kbd> 시점</span><span><kbd>왼쪽 클릭</kbd> 사격</span><span><kbd>오른쪽 클릭</kbd> 조준</span><span><kbd>R</kbd> 재장전</span></div>
-        <div><span><kbd>E</kbd> 중계기 차단</span><span><kbd>Space</kbd> 점프</span><span><kbd>Shift</kbd> 달리기</span><span><kbd>C</kbd> 앉기</span><span><kbd>Esc</kbd> 일시정지</span></div>
+        <div><span><kbd>E</kbd> 상호작용</span><span><kbd>Space</kbd> 점프</span><span><kbd>Shift</kbd> 달리기</span><span><kbd>C</kbd> 앉기</span><span><kbd>Esc</kbd> 일시정지</span></div>
         <div class="lg-touch"><em>터치</em><span>왼쪽 손가락으로 이동</span><span>오른쪽 손가락으로 시점 이동</span><span>화면의 버튼으로 사격 · 조준 · 재장전 · 점프</span></div>
       </aside>
     </section>
@@ -107,7 +107,7 @@ export const menuTemplate = `
         <p class="panel-note">브라우저가 마우스를 캡처하지 못하면 마우스 버튼을 누른 채 드래그해 시점을 움직일 수 있다. 왼쪽 버튼은 사격, 오른쪽 버튼은 조준도 함께 한다. 방향키 또는 <kbd>I</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd>로 시점을 돌리고 <kbd>Enter</kbd>로 사격할 수도 있다.</p>
         <h3>터치</h3>${ZC}
         <h3>게임패드</h3>
-        <p class="panel-note">스틱: 이동 및 시점 · RT: 사격 · LT: 조준 · A: 점프 · B: 앉기 · X: 재장전 · Y: 중계기 차단 · L3: 달리기 · Start: 일시정지</p>
+        <p class="panel-note">스틱: 이동 및 시점 · RT: 사격 · LT: 조준 · A: 점프 · B: 앉기 · X: 재장전 · Y: 상호작용 · L3: 달리기 · Start: 일시정지</p>
       </div>
     </div>
 

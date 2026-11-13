@@ -1,3 +1,4 @@
+import { addCampaignNavigation } from './campaign-navigation.js';
 import { menuTemplate } from './menu-template.js';
 import { QUALITY_NAMES, loadSettings, saveSettings } from './settings.js';
 import { QUALITY_PRESETS } from '../core/config.js';
@@ -14,6 +15,7 @@ function createMenus(game, actions) {
     node.textContent = presentation[node.dataset.story] || '';
   });
   t.appendChild(s);
+  addCampaignNavigation(s, game.story);
   let o = U => s.querySelector(U);
   let r = U => [...s.querySelectorAll(U)];
   let a = o(".panel");

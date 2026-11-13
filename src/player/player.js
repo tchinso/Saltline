@@ -31,8 +31,6 @@ var MOVEMENT = {
   fovSprint: 6,
   fovAds: 52,
   adsLook: .6,
-  regenDelay: 4,
-  regenRate: 25,
   recoilKeep: .35,
   recoilApply: 34,
   recoilRecover: 6.5,
@@ -72,7 +70,6 @@ function createPlayer(game) {
   let A = 0;
   let _ = 0;
   let M = 0;
-  let E = 99;
   let w = 0;
   let S = 0;
   let z = 0;
@@ -114,6 +111,7 @@ function createPlayer(game) {
       C.pitch = 0;
       C.vel.set(0, 0, 0);
       C.health = C.maxHealth;
+      game.medkits && game.medkits.reset();
       C.alive = true;
       C.onGround = true;
       C.sprinting = false;
@@ -135,7 +133,6 @@ function createPlayer(game) {
       x = y = b = m = 0;
       A = 0;
       _ = 0;
-      E = 99;
       w = 0;
       S = 0;
       z = 0;
@@ -148,7 +145,7 @@ function createPlayer(game) {
       K(0);
     },
     damage(F, X) {
-      !C.alive || C.invulnerable || !(F > 0) || (C.health = Math.max(0, C.health - F), E = 0, w = Math.min(1, w + .35 + F / 40), C.addShake(.22 + F / 70), game.events.emit("player:hit", {
+      !C.alive || C.invulnerable || !(F > 0) || (C.health = Math.max(0, C.health - F), w = Math.min(1, w + .35 + F / 40), C.addShake(.22 + F / 70), game.events.emit("player:hit", {
         amount: F,
         fromPos: X
       }), C.health <= 0 && (C.alive = false, z = 0, C.sprinting = false, game.events.emit("player:dead", {})));
@@ -290,8 +287,6 @@ function createPlayer(game) {
     p = Math.sin(h * Math.PI) * MOVEMENT.bobX * f;
     let k = C.vel.x * Y - C.vel.z * V;
     v = damp(v, -k / MOVEMENT.sprint * MOVEMENT.rollStrafe * lerp(1, .4, C.ads), 8, F);
-    E += F;
-    E > MOVEMENT.regenDelay && C.health < C.maxHealth && (C.health = Math.min(C.maxHealth, C.health + MOVEMENT.regenRate * F));
     K(F);
     ie(F);
   }
